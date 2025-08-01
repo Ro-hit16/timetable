@@ -2034,79 +2034,256 @@ export const fetchClasses = async (setClasses) => {
 // Update the loadTimetables function to handle nested subjects
 
 
-export const renderTimetableGrid = (divisionName, schedule) => {
-  if (!schedule || typeof schedule !== 'object') {
+// export const renderTimetableGrid = (divisionName, schedule) => {
+//   console.log("📅 Schedule received in renderTimetableGrid for", divisionName, schedule);
+//   if (!schedule || typeof schedule !== 'object') {
+//     return (
+//       <div className="text-center py-4 text-gray-500">
+//         No schedule available for {divisionName}
+//       </div>
+//     );
+//   }
+
+//   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+//   const periods = Array.from({ length: 6 }, (_, i) => i + 1);
+
+//   return (
+//     <div className="overflow-x-auto">
+//       <h2 className="text-lg font-bold mb-2 text-center text-blue-700">
+//         Timetable for {divisionName}
+//       </h2>
+//       <table className="w-full border-collapse border">
+//         <thead>
+//           <tr>
+//             <th className="border p-2 bg-gray-100">Day</th>
+//             {periods.map((period) => (
+//               <th key={period} className="border p-2 bg-gray-100">P{period}</th>
+//             ))}
+//           </tr>
+//         </thead>
+//         <tbody>
+//           {days.map((day) => (
+//             <tr key={day}>
+//               <td className="border p-2 font-semibold bg-gray-50">{day}</td>
+//               {periods.map((period) => {
+//                 const slot = schedule?.[day]?.[period - 1];
+
+//                 // DEBUG LOG
+//                 console.log("🧪 slot.subject object:", slot?.subject);
+
+//                 // SUBJECT NAME FALLBACK
+//                 let subjectDisplay = "No Subject";
+//                 if (slot?.subject) {
+//                   if (typeof slot.subject === 'object') {
+//                     subjectDisplay = slot.subject.name || slot.subject.subjectName || slot.subject.type || `ID: ${slot.subject._id}`;
+//                   } else {
+//                     subjectDisplay = slot.subject;
+//                   }
+//                 }
+
+//                 // TEACHER NAME FALLBACK
+//                 let teacherDisplay = "No Teacher";
+//                 if (slot?.teacher) {
+//                   if (typeof slot.teacher === 'object') {
+//                     teacherDisplay = slot.teacher.name || `ID: ${slot.teacher._id}`;
+//                   } else {
+//                     teacherDisplay = slot.teacher;
+//                   }
+//                 }
+
+//                 const classroom = slot?.classroom || "TBA";
+
+//                 // DEBUG LOGS
+//                 console.log(`📚 Subject for ${day} P${period}:`, subjectDisplay);
+//                 console.log(`👨‍🏫 Teacher for ${day} P${period}:`, teacherDisplay);
+
+//                 return (
+//                   <td key={period} className="border p-2 text-sm">
+//                     {slot ? (
+//                       <>
+//                         <div className="font-medium text-blue-900">{subjectDisplay}</div>
+//                         <div className="text-xs text-gray-600">{teacherDisplay}</div>
+//                         <div className="text-xs text-gray-400">{classroom}</div>
+//                       </>
+//                     ) : (
+//                       <span className="text-gray-400">Free</span>
+//                     )}
+//                   </td>
+//                 );
+//               })}
+//             </tr>
+//           ))}
+//         </tbody>
+//       </table>
+//     </div>
+//   );
+// };
+
+
+// export const renderTimetableGrid = (divisionName, schedule) => {
+//   console.log("📅 Schedule received in renderTimetableGrid for", divisionName, schedule);
+//   if (!schedule || typeof schedule !== 'object') {
+//     return (
+//       <div className="text-center py-4 text-gray-500">
+//         No schedule available for {divisionName}
+//       </div>
+//     );
+//   }
+
+//   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+//   const periods = Array.from({ length: 6 }, (_, i) => i + 1);
+
+//   return (
+//     <div className="overflow-x-auto">
+//       <h2 className="text-lg font-bold mb-2 text-center text-blue-700">
+//         Timetable for {divisionName}
+//       </h2>
+//       <table className="w-full border-collapse border">
+//         <thead>
+//           <tr>
+//             <th className="border p-2 bg-gray-100">Day</th>
+//             {periods.map((period) => (
+//               <th key={period} className="border p-2 bg-gray-100">P{period}</th>
+//             ))}
+//           </tr>
+//         </thead>
+//         <tbody>
+//           {days.map((day) => (
+//             <tr key={day}>
+//               <td className="border p-2 font-semibold bg-gray-50">{day}</td>
+//               {periods.map((period) => {
+//                 const slot = schedule?.[day]?.[period - 1];
+
+//                 // 🧪 DEBUG
+//                 console.log("🧪 Slot data:", slot);
+
+//                 // ✅ SUBJECT NAME
+//                 let subjectDisplay = "No Subject";
+//                 if (slot?.subject) {
+//                   if (typeof slot.subject === 'object') {
+//                     subjectDisplay = slot.subject.name ||
+//                                      slot.subject.subjectName ||
+//                                      `${slot.subject.type || "Type"} (${slot.subject._id.slice(-4)})`;
+//                   } else {
+//                     subjectDisplay = String(slot.subject);
+//                   }
+//                 }
+
+//                 // ✅ TEACHER NAME
+//                 let teacherDisplay = "No Teacher";
+//                 if (slot?.teacher) {
+//                   if (typeof slot.teacher === 'object') {
+//                     teacherDisplay = slot.teacher.name || `ID: ${slot.teacher._id.slice(-4)}`;
+//                   } else {
+//                     teacherDisplay = String(slot.teacher);
+//                   }
+//                 }
+
+//                 const classroom = slot?.classroom || "TBA";
+
+//                 return (
+//                   <td key={period} className="border p-2 text-sm">
+//                     {slot ? (
+//                       <>
+//                         <div className="font-medium text-blue-900">{subjectDisplay}</div>
+//                         <div className="text-xs text-gray-600">{teacherDisplay}</div>
+//                         <div className="text-xs text-gray-400">{classroom}</div>
+//                       </>
+//                     ) : (
+//                       <span className="text-gray-400">Free</span>
+//                     )}
+//                   </td>
+//                 );
+//               })}
+//             </tr>
+//           ))}
+//         </tbody>
+//       </table>
+//     </div>
+//   );
+// }; 
+
+ 
+export const renderTimetableGrid = (
+  divisionName,
+  schedule,
+  subjects = [],
+  classrooms = []
+) => {
+  if (!schedule || typeof schedule !== "object") {
     return (
       <div className="text-center py-4 text-gray-500">
-        No schedule available for {divisionName}
-      </div>
+        No timetable data available
+      </div> 
     );
   }
 
-  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-  const periods = Array.from({ length: 6 }, (_, i) => i + 1);
+  const days = Object.keys(schedule);
+  const periodsPerDay = Math.max(
+    ...days.map((day) => schedule[day]?.length || 0)
+  );
+
+  const getSubjectNameById = (id) => {
+    const subject = subjects.find((s) => s._id === id);
+    return subject ? subject.name : "Unnamed Subject";
+  };
+
+  const getClassroomNameById = (id) => {
+    const cls = classrooms.find((c) => c._id === id);
+    return cls ? cls.name : `Room ${id?.slice?.(-4) || "N/A"}`;
+  };
 
   return (
-    <div className="overflow-x-auto">
-      <h2 className="text-lg font-bold mb-2 text-center text-blue-700">
-        Timetable for {divisionName}
-      </h2>
-      <table className="w-full border-collapse border">
-        <thead>
-          <tr>
-            <th className="border p-2 bg-gray-100">Day</th>
-            {periods.map((period) => (
-              <th key={period} className="border p-2 bg-gray-100">P{period}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {days.map((day) => (
-            <tr key={day}>
-              <td className="border p-2 font-semibold bg-gray-50">{day}</td>
-              {periods.map((period) => {
-                const slot = schedule?.[day]?.[period - 1];
-                
-                console.log("🧪 slot.subject object:", slot?.subject);
-
-                const subject =
-                  typeof slot?.subject === 'object'
-                    ? slot.subject?.name || slot.subject?.subjectName || "Unknown Subject"
-                    : slot?.subject || "Unknown Subject";
-
-                const teacher =
-                  typeof slot?.teacher === 'object'
-                    ? slot.teacher?.name || "Unknown Teacher"
-                    : slot?.teacher || "Unknown Teacher";
-
-                const classroom = slot?.classroom || 'TBA';
-
-                // Debug logs (optional)
-                console.log(`📚 Subject for ${day} P${period}:`, subject);
-                console.log(`👨‍🏫 Teacher for ${day} P${period}:`, teacher);
-
+    <table className="w-full table-auto border text-sm">
+      <thead>
+        <tr>
+          <th className="border px-2 py-1 text-left bg-gray-100">
+            Day / Period
+          </th>
+          {Array.from({ length: periodsPerDay }).map((_, periodIdx) => (
+            <th key={periodIdx} className="border px-2 py-1 bg-gray-100">
+              {periodIdx + 1}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {days.map((day) => (
+          <tr key={day}>
+            <td className="border px-2 py-1 font-medium bg-gray-50">{day}</td>
+            {schedule[day].map((slot, periodIdx) => {
+              if (!slot) {
                 return (
-                  <td key={period} className="border p-2 text-sm">
-                    {slot ? (
-                      <>
-                        <div className="font-medium text-blue-900">{subject}</div>
-                        <div className="text-xs text-gray-600">{teacher}</div>
-                        <div className="text-xs text-gray-400">{classroom}</div>
-                      </>
-                    ) : (
-                      <span className="text-gray-400">Free</span>
-                    )}
+                  <td key={periodIdx} className="border px-2 py-1 text-gray-400">
+                    Free
                   </td>
                 );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              }
+
+              const subjectId = typeof slot.subject === "object" ? slot.subject._id : slot.subject;
+              const classroomId = typeof slot.classroom === "object" ? slot.classroom._id : slot.classroom;
+              const teacherName = typeof slot.teacher === "object"
+                ? slot.teacher.name
+                : slot.teacher || "Unknown";
+
+              const subjectName = getSubjectNameById(subjectId);
+              const classroomName = getClassroomNameById(classroomId);
+
+              return (
+                <td key={periodIdx} className="border px-2 py-1">
+                  <div className="font-semibold">{subjectName}</div>
+                  <div className="text-xs text-gray-700">{teacherName}</div>
+                  <div className="text-xs text-gray-500">{classroomName}</div>
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 };
-
+ 
 
 
 

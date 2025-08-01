@@ -4794,77 +4794,149 @@ export default class GeneticAlgorithm {
     }
   }
 
-  createRandomSchedule(divisions, subjects, teachers, classes) {
-    const schedule = {};
-    this.periodsPerDay = 6;
+//   createRandomSchedule(divisions, subjects, teachers, classes) {
+//     const schedule = {};
+//     this.periodsPerDay = 6;
 
-    const validSubjects = subjects.filter(s => s.name && s.name.trim() !== '');
+//     const validSubjects = subjects.filter(s => s.name && s.name.trim() !== '');
 
-    for (const divisionName of divisions) {
-      schedule[divisionName] = {};
+//     for (const divisionName of divisions) {
+//       schedule[divisionName] = {};
 
-      for (const day of this.days) {
-        schedule[divisionName][day] = [];
+//       for (const day of this.days) {
+//         schedule[divisionName][day] = [];
 
-        for (let periodIndex = 0; periodIndex < this.periodsPerDay; periodIndex++) {
-          let subject = null;
-          let attempts = 0;
+//         for (let periodIndex = 0; periodIndex < this.periodsPerDay; periodIndex++) {
+//           let subject = null;
+//           let attempts = 0;
 
-          while (!subject && attempts < 5 && validSubjects.length > 0) {
-            const temp = validSubjects[Math.floor(Math.random() * validSubjects.length)];
-            subject = temp;
-            attempts++;
-          }
+//           while (!subject && attempts < 5 && validSubjects.length > 0) {
+//             const temp = validSubjects[Math.floor(Math.random() * validSubjects.length)];
+//             subject = temp;
+//             attempts++;
+//           }
 
-          if (!subject) {
-            schedule[divisionName][day].push(null);
-            continue;
-          }
+//           if (!subject) {
+//             schedule[divisionName][day].push(null);
+//             continue;
+//           }
 
-          const eligibleTeachers = teachers.filter(
-            (teacher) => teacher.semester === Number(subject.semester)
-          );
-          const teacher = eligibleTeachers.length > 0
-            ? eligibleTeachers[Math.floor(Math.random() * eligibleTeachers.length)]
-            : null;
+//           const eligibleTeachers = teachers.filter(
+//             (teacher) => teacher.semester === Number(subject.semester)
+//           );
+//           const teacher = eligibleTeachers.length > 0
+//             ? eligibleTeachers[Math.floor(Math.random() * eligibleTeachers.length)]
+//             : null;
 
-          const classroom = classes.length > 0
-            ? classes[Math.floor(Math.random() * classes.length)]
-            : null;
+//           const classroom = classes.length > 0
+//             ? classes[Math.floor(Math.random() * classes.length)]
+//             : null;
 
-          const timeSlot = this.getTimeForPeriod(periodIndex);
+//           const timeSlot = this.getTimeForPeriod(periodIndex);
 
-          const slot = {
-            period: periodIndex + 1,
-            subject: {
-  _id: subject._id,
-  subjectName: subject.subjectName || 'Unnamed Subject',
-  type: subject.type === 'theory' ? 'Theory' : (subject.type || 'Theory')
-},
+//           const slot = {
+//             period: periodIndex + 1,
+//             subject: {
+//   _id: subject._id,
+//   subjectName: subject.subjectName || 'Unnamed Subject',
+//   type: subject.type === 'theory' ? 'Theory' : (subject.type || 'Theory')
+// },
 
-            teacher: teacher
-              ? {
-                  _id: teacher._id,
-                  name: teacher.name || 'Unnamed Teacher'
-                }
-              : null,
-            classroom: classroom
-              ? {
-                  _id: classroom._id,
-                  room_number: classroom.room_number || classroom.classNumber || 'Unassigned'
-                }
-              : null,
-            start_time: timeSlot.start,
-            end_time: timeSlot.end
-          };
+//             teacher: teacher
+//               ? {
+//                   _id: teacher._id,
+//                   name: teacher.name || 'Unnamed Teacher'
+//                 }
+//               : null,
+//             classroom: classroom
+//               ? {
+//                   _id: classroom._id,
+//                   room_number: classroom.room_number || classroom.classNumber || 'Unassigned'
+//                 }
+//               : null,
+//             start_time: timeSlot.start,
+//             end_time: timeSlot.end
+//           };
 
-          schedule[divisionName][day].push(slot);
+//           schedule[divisionName][day].push(slot);
+//         }
+//       }
+//     }
+
+//     return schedule;
+//   }
+
+createRandomSchedule(divisions, subjects, teachers, classes) {
+  const schedule = {};
+  this.periodsPerDay = 6;
+
+  const validSubjects = subjects.filter(s => s.name && s.name.trim() !== '');
+
+  for (const divisionName of divisions) {
+    schedule[divisionName] = {};
+
+    for (const day of this.days) {
+      schedule[divisionName][day] = [];
+
+      for (let periodIndex = 0; periodIndex < this.periodsPerDay; periodIndex++) {
+        let subject = null;
+        let attempts = 0;
+
+        while (!subject && attempts < 5 && validSubjects.length > 0) {
+          const temp = validSubjects[Math.floor(Math.random() * validSubjects.length)];
+          subject = temp;
+          attempts++;
         }
+
+        if (!subject) {
+          schedule[divisionName][day].push(null);
+          continue;
+        }
+
+        const eligibleTeachers = teachers.filter(
+          (teacher) => teacher.semester === Number(subject.semester)
+        );
+        const teacher = eligibleTeachers.length > 0
+          ? eligibleTeachers[Math.floor(Math.random() * eligibleTeachers.length)]
+          : null;
+
+        const classroom = classes.length > 0
+          ? classes[Math.floor(Math.random() * classes.length)]
+          : null;
+
+        const timeSlot = this.getTimeForPeriod(periodIndex);
+
+        const slot = {
+          period: periodIndex + 1,
+          subject: {
+            _id: subject._id,
+            subjectName: subject.name || subject.subjectName || 'Unnamed Subject',
+            type: subject.type === 'theory' ? 'Theory' : (subject.type || 'Theory')
+          },
+          teacher: teacher
+            ? {
+                _id: teacher._id,
+                name: teacher.name || 'Unnamed Teacher'
+              }
+            : null,
+          classroom: classroom
+            ? {
+                _id: classroom._id,
+                room_number: classroom.room_number || classroom.classNumber || 'Unassigned'
+              }
+            : null,
+          start_time: timeSlot.start,
+          end_time: timeSlot.end
+        };
+
+        schedule[divisionName][day].push(slot);
       }
     }
-
-    return schedule;
   }
+
+  return schedule;
+}
+
 
   getTimeForPeriod(periodIndex) {
     const timeSlots = [
@@ -5078,3 +5150,225 @@ export default class GeneticAlgorithm {
     }
   }
 }
+
+
+
+// export default class GeneticAlgorithm {
+//   constructor(config = {}) {
+//     this.populationSize = config.populationSize || 50;
+//     this.maxGenerations = config.maxGenerations || 100;
+//     this.mutationRate = config.mutationRate || 0.1;
+//     this.crossoverRate = config.crossoverRate || 0.8;
+//     this.elitismRate = config.elitismRate || 0.1;
+//     this.periodsPerDay = 6;
+//   }
+
+//   async generateSchedule({ divisions, subjects, teachers, classes }) {
+//   try {
+//     const schedule = this.run(divisions, subjects, teachers, classes);
+
+//     if (!schedule || Object.keys(schedule).length === 0) {
+//       console.error("⚠️ Empty schedule generated");
+//       return { schedule: {}, metadata: null };
+//     }
+
+//     return {
+//       schedule,
+//       metadata: {
+//         fitnessScore: this.fitness(schedule),
+//         generation_count: this.maxGenerations,
+//         conflictsResolved: true,
+//         algorithm_version: "1.0.0"
+//       }
+//     };
+//   } catch (error) {
+//     console.error("❌ Error in generateSchedule:", error);
+//     throw new Error("Failed to generate schedule");
+//   }
+// }
+
+
+//   run(divisions, subjects, teachers, classes) {
+//     let population = this.initializePopulation(divisions, subjects, teachers, classes);
+
+//     for (let generation = 0; generation < this.maxGenerations; generation++) {
+//       const fitnessScores = population.map((schedule) => this.fitness(schedule));
+//       const eliteCount = Math.floor(this.elitismRate * this.populationSize);
+//       const elites = this.selectElite(population, fitnessScores, eliteCount);
+
+//       const newPopulation = [...elites];
+
+//       while (newPopulation.length < this.populationSize) {
+//         const parent1 = this.selectParent(population, fitnessScores);
+//         const parent2 = this.selectParent(population, fitnessScores);
+
+//         let offspring;
+//         if (Math.random() < this.crossoverRate) {
+//           offspring = this.crossover(parent1, parent2);
+//         } else {
+//           offspring = { ...parent1 };
+//         }
+
+//         const mutated = this.mutate(offspring, divisions, subjects, teachers, classes);
+//         newPopulation.push(mutated);
+//       }
+
+//       population = newPopulation;
+//     }
+
+//     const bestSchedule = this.selectElite(
+//       population,
+//       population.map((schedule) => this.fitness(schedule)),
+//       1
+//     )[0];
+
+//     return bestSchedule;
+//   }
+
+//   initializePopulation(divisions, subjects, teachers, classes) {
+//     const population = [];
+//     for (let i = 0; i < this.populationSize; i++) {
+//       const schedule = this.createRandomSchedule(divisions, subjects, teachers, classes);
+//       population.push(schedule);
+//     }
+//     return population;
+//   }
+
+// createRandomSchedule(divisions, subjects, teachers, classes) {
+//   const schedule = {};
+
+//   divisions.forEach((division) => {
+//     // No filtering by division
+//     const eligibleSubjects = subjects.filter(subj => subj._id); // at least has an ID
+
+//     for (let day = 0; day < 5; day++) {
+//       for (let period = 0; period < this.periodsPerDay; period++) {
+//         const subject = eligibleSubjects[Math.floor(Math.random() * eligibleSubjects.length)];
+//         if (!subject) continue;
+
+//         // Pick random teacher (no subject-teacher mapping in your data)
+//         const teacher = teachers[Math.floor(Math.random() * teachers.length)];
+//         if (!teacher) continue;
+
+//         const key = `${division}_${day}_${period}`;
+//         schedule[key] = {
+//           subject: subject.name || subject.subjectName || "Unnamed Subject",
+//           subjectId: subject._id,
+//           teacher: teacher.name || "Unnamed Teacher",
+//           teacherId: teacher._id,
+//           room: `R-${Math.floor(Math.random() * 10) + 1}`,
+//         };
+//       }
+//     }
+//   });
+
+//   return schedule;
+// }
+
+
+
+//   crossover(parent1, parent2) {
+//     const keys = Object.keys(parent1);
+//     const crossoverPoint = Math.floor(Math.random() * keys.length);
+
+//     const offspring = {};
+//     for (let i = 0; i < keys.length; i++) {
+//       const key = keys[i];
+//       offspring[key] = i < crossoverPoint ? parent1[key] : parent2[key];
+//     }
+
+//     return offspring;
+//   }
+
+//  mutate(schedule, divisions, subjects, teachers, classes) {
+//   const mutated = { ...schedule };
+//   const keys = Object.keys(mutated);
+
+//   for (const key of keys) {
+//     if (Math.random() < this.mutationRate) {
+//       const [divisionId, day, period] = key.split("_");
+
+//       const division = divisions.find((d) => d._id?.toString() === divisionId);
+//       if (!division) continue;
+
+//       const eligibleSubjects = subjects.filter(
+//         (s) => s.division?.toString() === divisionId
+//       );
+//       if (eligibleSubjects.length === 0) continue;
+
+//       const subject =
+//         eligibleSubjects[Math.floor(Math.random() * eligibleSubjects.length)];
+//       if (!subject) continue;
+
+//       const teacher = teachers.find((t) =>
+//         t.subjects?.some(
+//           (subjId) =>
+//             subjId?.toString && subject._id?.toString &&
+//             subjId.toString() === subject._id.toString()
+//         )
+//       );
+//       if (!teacher) continue;
+
+//       mutated[key] = {
+//         subject: subject.name || subject.subjectName || "Unnamed Subject",
+//         subjectId: subject._id,
+//         teacher: teacher.name || "Unnamed Teacher",
+//         teacherId: teacher._id,
+//         room: `R-${Math.floor(Math.random() * 10) + 1}`,
+//       };
+//     }
+//   }
+
+//   return mutated;
+// }
+
+
+//   selectElite(population, fitnessScores, count) {
+//     const scored = population.map((individual, idx) => ({
+//       schedule: individual,
+//       fitness: fitnessScores[idx],
+//     }));
+
+//     scored.sort((a, b) => b.fitness - a.fitness);
+//     return scored.slice(0, count).map((entry) => entry.schedule);
+//   }
+
+//   selectParent(population, fitnessScores) {
+//     const totalFitness = fitnessScores.reduce((a, b) => a + b, 0);
+//     const rand = Math.random() * totalFitness;
+//     let sum = 0;
+
+//     for (let i = 0; i < population.length; i++) {
+//       sum += fitnessScores[i];
+//       if (sum >= rand) return population[i];
+//     }
+
+//     return population[population.length - 1];
+//   }
+
+//   fitness(schedule) {
+//     let score = 0;
+//     const teacherSlots = {};
+//     const roomSlots = {};
+
+//     for (const key in schedule) {
+//       const entry = schedule[key];
+//       const timeSlot = key.split("_").slice(1).join("_");
+
+//       const teacherKey = `${entry.teacherId}_${timeSlot}`;
+//       const roomKey = `${entry.room}_${timeSlot}`;
+
+//       if (!teacherSlots[teacherKey]) {
+//         teacherSlots[teacherKey] = true;
+//         score += 1;
+//       }
+
+//       if (!roomSlots[roomKey]) {
+//         roomSlots[roomKey] = true;
+//         score += 1;
+//       }
+//     }
+
+//     return score;
+//   }
+// }

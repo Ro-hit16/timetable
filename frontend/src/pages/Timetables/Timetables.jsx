@@ -1261,6 +1261,7 @@ const Timetables = () => {
           fetchSubjects(setSubjects),
           fetchTeachers(setTeachers),
           fetchClasses(setClasses)
+
         ]);
       } catch (error) {
         toast.error('Failed to load initial data');
@@ -1275,44 +1276,49 @@ const Timetables = () => {
   }, []);
 
 
-  useEffect(() => {
-    const loadInitialData = async () => {
-      setLoading(true);
-      try {
-        const [depsResult, subsResult, teachersResult, classesResult] = await Promise.all([
-          fetchDepartments(setDepartments),
-          fetchSubjects(setSubjects),
-          fetchTeachers(setTeachers),
-          fetchClasses(setClasses)
-        ]);
-
-        console.log('📥 Initial Data Loaded:', {
-          departments: depsResult?.length,
-          subjects: subsResult?.length,
-          teachers: teachersResult?.length,
-          classes: classesResult?.length
-        });
-
-      } catch (error) {
-        console.error('❌ Error loading initial data:', error);
-        toast.error('Failed to load initial data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadInitialData();
-  }, []);
 
   useEffect(() => {
     const loadInitialData = async () => {
       const res = await fetch('/api/classes');
       const data = await res.json();
       setClasses(data); // directly set
-      //console.log("✅ SETTING CLASSES TO:", data);
+      console.log("✅ SETTING CLASSES TO:", data);
     };
     loadInitialData();
   }, []);
+
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        const [classesRes, subjectsRes, classroomsRes] = await Promise.all([
+          fetch('/api/classes'),
+          fetch('/api/subjects'),
+
+        ]);
+
+        const [classes, subjects] = await Promise.all([
+          classesRes.json(),
+          subjectsRes.json(),
+
+        ]);
+
+        setClasses(classes);
+        setSubjects(subjects.data.subjects);
+
+
+        console.log("✅ Classes:", classes);
+        console.log("📚 Subjects:", subjects.data.subjects);
+
+      } catch (err) {
+        console.error("❌ Failed to load initial data:", err);
+      }
+    };
+
+    loadInitialData();
+  }, []);
+
+
   const loadTimetables = async () => {
     //console.log("🔍 Filters being used to fetch timetables:", filters);
 
@@ -1336,8 +1342,8 @@ const Timetables = () => {
       console.log("🧪 Full timetable object sample:", JSON.stringify(sample, null, 2));
 
       console.log("📌 division:", sample.divisions);
-      // console.log(`📌 Division ${idx + 1}: ${division.division_name}`);
-    console.log("📅 Schedule of first division:", sample.divisions[0].schedule);
+      //console.log(`📌 Division ${idx + 1}: ${division.division_name}`);
+      console.log("📅 Schedule of first division:", sample.divisions[0].schedule);
 
 
 
@@ -1584,7 +1590,7 @@ const Timetables = () => {
   };
 
   const handleDelete = async (id) => {
-     if (!window.confirm('Are you sure you want to delete this timetable?')) return;
+    if (!window.confirm('Are you sure you want to delete this timetable?')) return;
 
     try {
       const result = await timetableService.deleteTimetable(id);
@@ -2148,7 +2154,7 @@ const Timetables = () => {
 
             </div>
           )}
-{/* 
+          {/* 
           
 {console.log("🧾 formattedTimetable:", formattedTimetable)}
 {formattedTimetable?.divisions?.length > 0 ? (
@@ -2184,41 +2190,51 @@ const Timetables = () => {
   </div>
 )} */}
 
-{console.log("🧾 formattedTimetable:", formattedTimetable)}
-{formattedTimetable?.divisions?.length > 0 ? (
-  formattedTimetable.divisions.map((division, idx) => {
-    console.log(`📌 Division ${idx + 1}: ${division.division_name}`);
-    console.log("📌 Schedule for this division:", division.schedule);
+          {console.log("🧾 formattedTimetable:", formattedTimetable)}
+          {console.log("📚 Subjects:", subjects)}
+          {console.log("🏫 Classrooms:", classes)}
 
-    const schedule = division.schedule || {};
-    const hasSchedule = Object.keys(schedule).length > 0;
+          {formattedTimetable?.divisions?.length > 0 ? (
+            formattedTimetable.divisions.map((division, idx) => {
+              console.log(`📌 Division ${idx + 1}: ${division.division_name}`);
+              console.log("📌 Schedule for this division:", division.schedule);
 
-    return (
-      <div key={idx} className="bg-white rounded-lg border mb-6">
-        <div className="px-6 py-4 border-b">
-          <h3 className="text-lg font-semibold">
-            Division {division.division_name} — Semester {formattedTimetable.semester}
-          </h3>
-        </div>
-        <div className="p-6 overflow-x-auto">
-          {console.log("📦 formattedTimetable = ", formattedTimetable)
-}
-          {hasSchedule ? (
-            renderTimetableGrid(division.division_name, schedule) // ✅ Pass only the schedule
+              const schedule = division.schedule || {};
+              const hasSchedule = Object.keys(schedule).length > 0;
+
+              return (
+                <div key={idx} className="bg-white rounded-lg border mb-6">
+                  <div className="px-6 py-4 border-b">
+                    <h3 className="text-lg font-semibold">
+                      Division {division.division_name} — Semester {formattedTimetable.semester}
+                    </h3>
+                  </div>
+                  <div className="p-6 overflow-x-auto">
+                    {console.log("📦 formattedTimetable = ", formattedTimetable)
+                      }
+                    {hasSchedule ? (
+                      // renderTimetableGrid(division.division_name, schedule) // ✅ Pass only the schedule
+                      renderTimetableGrid(
+                        division.division_name,
+                        schedule,
+                        formattedTimetable.subjects || subjects,
+                        formattedTimetable.classes || classes
+                      )
+
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        No schedule found for this division
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
           ) : (
             <div className="text-center py-8 text-gray-500">
-              No schedule found for this division
-            </div>
+              No divisions found or timetable not generated yet.
+            </div> 
           )}
-        </div>
-      </div>
-    );
-  })
-) : (
-  <div className="text-center py-8 text-gray-500">
-    No divisions found or timetable not generated yet.
-  </div>
-)}
 
 
 
