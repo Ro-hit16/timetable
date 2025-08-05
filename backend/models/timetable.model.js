@@ -800,10 +800,11 @@ const timeSlotSchema = new mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId,
     name: String,
     type: {
-      type: String,
-      enum: ['Theory', 'Lab', 'Tutorial'],
-      default: 'Theory'
-    }
+  type: String,
+  enum: ['theory', 'practical', 'lab', 'tutorial'],
+  default: 'theory'
+}
+
   },
   teacher: {
     _id: mongoose.Schema.Types.ObjectId,

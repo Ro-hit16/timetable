@@ -3514,6 +3514,509 @@ class TimetableController {
 //   }
 // }
 
+// static async generateTimetable(req, res, next) {
+//   try {
+//     console.log("📥 Incoming Request Body:", JSON.stringify(req.body, null, 2));
+
+//     const {
+//       departmentId,
+//       semester,
+//       academicYear,
+//       divisions,
+//       subjects = [],
+//       teachers = [],
+//       classes = [],
+//     } = req.body;
+
+//     if (!departmentId || !semester || !academicYear || !Array.isArray(divisions) || divisions.length === 0) {
+//       console.log("❗ Missing required fields");
+//       return next(createError(400, 'Missing required fields: departmentId, semester, academicYear, or divisions'));
+//     }
+
+//     const targetSemester = String(semester).trim();
+//     const normalize = (val) => String(val ?? '').trim();
+
+//     // console.log("🎯 Semester:", targetSemester);
+//     // console.log("🏢 Department ID:", departmentId);
+//     // console.log("📅 Academic Year:", academicYear);
+//     // console.log("👥 Divisions:", divisions.join(', '));
+
+//     // Normalize semester fields for filtering
+//     const filteredSubjects = subjects.filter(
+//       (s) => normalize(s.semester) === targetSemester
+//     );
+
+//     const filteredTeachers = teachers.filter(
+//       (t) => normalize(t.semester) === targetSemester
+//     );
+
+//     const filteredClasses = classes.filter(
+//       (c) => normalize(c.semester) === targetSemester
+//     );
+
+//     // console.log("📚 Filtered Subjects:", filteredSubjects.length);
+//     // console.log("👩‍🏫 Filtered Teachers:", filteredTeachers.length);
+//     // console.log("🏫 Filtered Classes:", filteredClasses.length);
+
+//     if (!filteredSubjects.length || !filteredTeachers.length || !filteredClasses.length) {
+//       return next(createError(400, `Subjects, teachers, and classes must not be empty for semester ${semester}`));
+//     }
+
+//     // 🧬 Run genetic algorithm
+//     const geneticAlgorithm = new GeneticAlgorithm({
+//       populationSize: 50,
+//       maxGenerations: 100,
+//       mutationRate: 0.1,
+//       crossoverRate: 0.8,
+//       elitismRate: 0.1,
+//       departmentId,
+//       semester: targetSemester,
+//       academicYear,
+//       divisions,
+//     });
+
+//     // console.log("🧬 Running Genetic Algorithm...");
+//     const { schedule, metadata } = await geneticAlgorithm.generateSchedule({
+//       divisions,
+//       subjects: filteredSubjects,
+//       teachers: filteredTeachers,
+//       classes: filteredClasses,
+//     });
+
+//     if (!schedule || Object.keys(schedule).length === 0) {
+//       return next(createError(500, 'Failed to generate a valid schedule'));
+//     }
+
+//     // 📝 Logging summary
+//     for (const [division, daySchedule] of Object.entries(schedule)) {
+//       // console.log(`📘 Division: ${division}`);
+//       for (const [day, periods] of Object.entries(daySchedule)) {
+//         // console.log(`   📅 ${day} => ${periods.length} periods`);
+//         periods.forEach((period, idx) => {
+//           if (!period) {
+//             // console.log(`      🕒 Period ${idx + 1}: Free Period`);
+//             return;
+//           }
+
+//           const subject = typeof period.subject === 'string'
+//             ? period.subject
+//             : period.subject?.subjectName || period.subject?.name || 'Unnamed Subject';
+
+//           const teacher = typeof period.teacher === 'string'
+//             ? period.teacher
+//             : period.teacher?.name || 'Unnamed Teacher';
+
+//           const classroom = typeof period.classroom === 'string'
+//             ? period.classroom
+//             : period.classroom?.room_number || period.classroom?.className || 'Unnamed Room';
+
+//           const start = period.start_time || period.startTime || '??';
+//           const end = period.end_time || period.endTime || '??';
+
+//           // console.log(`      🕒 Period ${idx + 1} (${start}-${end}): ${subject} by ${teacher} in Room ${classroom}`);
+//         });
+//       }
+//     }
+
+//     // 💾 Save timetable
+//     const timetable = new Timetable({
+//       departmentId,
+//       semester: Number(targetSemester),
+//       academicYear,
+//       divisions: divisions.map(name => ({
+//         division_name: name,
+//         schedule: schedule[name] || {},
+//       })),
+//       status: 'draft',
+//       generation_metadata: {
+//         fitness_score: metadata.fitnessScore,
+//         generation_count: metadata.generation_count || metadata.generations || 0,
+//         conflicts_resolved: metadata.conflictsResolved,
+//         algorithm_version: metadata.algorithm_version,
+//         generated_at: new Date(),
+//       },
+//     });
+
+//     await timetable.save();
+//     // console.log("💾 Timetable saved.");
+
+//     const savedTimetable = await Timetable.findById(timetable._id).lean();
+
+//     res.status(201).json({
+//       success: true,
+//       message: 'Timetable generated successfully',
+//       data: savedTimetable,
+//     });
+
+//   } catch (error) {
+//     // console.error('❌ Error generating timetable:', error.message);
+//     // console.error('🧵 Stack Trace:', error.stack);
+//     next(createError(500, 'Error in timetable generation'));
+//   }
+// }
+
+// static async generateTimetable(req, res, next) {
+//   try {
+//     console.log("📥 Incoming Request Body:", JSON.stringify(req.body, null, 2));
+
+//     const {
+//       departmentId,
+//       semester,
+//       academicYear,
+//       divisions,
+//       subjects = [],
+//       teachers = [],
+//       classes = [],
+//     } = req.body;
+
+//     if (!departmentId || !semester || !academicYear || !Array.isArray(divisions) || divisions.length === 0) {
+//       console.log("❗ Missing required fields");
+//       return next(createError(400, 'Missing required fields: departmentId, semester, academicYear, or divisions'));
+//     }
+
+//     const targetSemester = String(semester).trim();
+//     const normalize = (val) => String(val ?? '').trim();
+
+//     const filteredSubjects = subjects.filter(
+//       (s) => normalize(s.semester) === targetSemester
+//     );
+
+//     const filteredTeachers = teachers.filter(
+//       (t) => normalize(t.semester) === targetSemester
+//     );
+
+//     const filteredClasses = classes.filter(
+//       (c) => normalize(c.semester) === targetSemester
+//     );
+
+//     if (!filteredSubjects.length || !filteredTeachers.length || !filteredClasses.length) {
+//       return next(createError(400, `Subjects, teachers, and classes must not be empty for semester ${semester}`));
+//     }
+
+//     const geneticAlgorithm = new GeneticAlgorithm({
+//       populationSize: 50,
+//       maxGenerations: 100,
+//       mutationRate: 0.1,
+//       crossoverRate: 0.8,
+//       elitismRate: 0.1,
+//       departmentId,
+//       semester: targetSemester,
+//       academicYear,
+//       divisions,
+//     });
+
+//     const { schedule, metadata } = await geneticAlgorithm.generateSchedule({
+//       divisions,
+//       subjects: filteredSubjects,
+//       teachers: filteredTeachers,
+//       classes: filteredClasses,
+//     });
+
+//     if (!schedule || Object.keys(schedule).length === 0) {
+//       return next(createError(500, 'Failed to generate a valid schedule'));
+//     }
+
+//     // 🧠 Map subjects and teachers by ID for lookup
+//     const subjectMap = Object.fromEntries(filteredSubjects.map(s => [String(s._id), s]));
+//     const teacherMap = Object.fromEntries(filteredTeachers.map(t => [String(t._id), t]));
+
+//     // 🧪 Enrich each slot in the schedule with full subject and teacher
+//     for (const division of Object.keys(schedule)) {
+//       const daySchedule = schedule[division];
+//       for (const day of Object.keys(daySchedule)) {
+//         daySchedule[day] = daySchedule[day].map((period) => {
+//           if (!period) return null;
+
+//           const enrichedPeriod = { ...period };
+
+//           if (typeof enrichedPeriod.subject === 'string') {
+//             enrichedPeriod.subject = subjectMap[enrichedPeriod.subject] || { subjectName: 'Unknown Subject' };
+//           }
+
+//           if (typeof enrichedPeriod.teacher === 'string') {
+//             enrichedPeriod.teacher = teacherMap[enrichedPeriod.teacher] || { name: 'Unknown Teacher' };
+//           }
+
+//           return enrichedPeriod;
+//         });
+//       }
+//     }
+
+//     const timetable = new Timetable({
+//       departmentId,
+//       semester: Number(targetSemester),
+//       academicYear,
+//       divisions: divisions.map(name => ({
+//         division_name: name,
+//         schedule: schedule[name] || {},
+//       })),
+//       status: 'draft',
+//       generation_metadata: {
+//         fitness_score: metadata.fitnessScore,
+//         generation_count: metadata.generation_count || metadata.generations || 0,
+//         conflicts_resolved: metadata.conflictsResolved,
+//         algorithm_version: metadata.algorithm_version,
+//         generated_at: new Date(),
+//       },
+//     });
+
+//     await timetable.save();
+
+//     const savedTimetable = await Timetable.findById(timetable._id).lean();
+
+//     res.status(201).json({
+//       success: true,
+//       message: 'Timetable generated successfully',
+//       data: savedTimetable,
+//     });
+
+//   } catch (error) {
+//     next(createError(500, 'Error in timetable generation'));
+//   }
+// }
+
+// static async generateTimetable(req, res, next) {
+//   try {
+//     console.log("📥 Incoming Request Body:", JSON.stringify(req.body, null, 2));
+
+//     const {
+//       departmentId,
+//       semester,
+//       academicYear,
+//       divisions,
+//       subjects = [],
+//       teachers = [],
+//       classes = [],
+//     } = req.body;
+
+//     if (!departmentId || !semester || !academicYear || !Array.isArray(divisions) || divisions.length === 0) {
+//       console.log("❗ Missing required fields");
+//       return next(createError(400, 'Missing required fields: departmentId, semester, academicYear, or divisions'));
+//     }
+
+//     const targetSemester = String(semester).trim();
+//     const normalize = (val) => String(val ?? '').trim();
+
+//     const filteredSubjects = subjects.filter((s) => normalize(s.semester) === targetSemester);
+//     const filteredTeachers = teachers.filter((t) => normalize(t.semester) === targetSemester);
+//     const filteredClasses = classes.filter((c) => normalize(c.semester) === targetSemester);
+
+//     if (!filteredSubjects.length || !filteredTeachers.length || !filteredClasses.length) {
+//       return next(createError(400, `Subjects, teachers, and classes must not be empty for semester ${semester}`));
+//     }
+
+//     const geneticAlgorithm = new GeneticAlgorithm({
+//       populationSize: 50,
+//       maxGenerations: 100,
+//       mutationRate: 0.1,
+//       crossoverRate: 0.8,
+//       elitismRate: 0.1,
+//       departmentId,
+//       semester: targetSemester,
+//       academicYear,
+//       divisions,
+//     });
+
+//     const { schedule, metadata } = await geneticAlgorithm.generateSchedule({
+//       divisions,
+//       subjects: filteredSubjects,
+//       teachers: filteredTeachers,
+//       classes: filteredClasses,
+//     });
+
+//     if (!schedule || Object.keys(schedule).length === 0) {
+//       return next(createError(500, 'Failed to generate a valid schedule'));
+//     }
+
+//     // 🧠 Create lookup maps
+//     const subjectMap = Object.fromEntries(
+//       filteredSubjects.map(s => [String(s._id), { ...s, subjectName: s.name }])
+//     );
+//     const teacherMap = Object.fromEntries(
+//       filteredTeachers.map(t => [String(t._id), t])
+//     );
+
+//     // 🧪 Enrich each slot with full subject and teacher info
+//     for (const division of Object.keys(schedule)) {
+//       const daySchedule = schedule[division];
+//       for (const day of Object.keys(daySchedule)) {
+//         daySchedule[day] = daySchedule[day].map((period) => {
+//           if (!period) return null;
+
+//           const enrichedPeriod = { ...period };
+
+//           if (typeof enrichedPeriod.subject === 'string') {
+//             enrichedPeriod.subject = subjectMap[enrichedPeriod.subject] || { subjectName: 'Unknown Subject' };
+//           }
+
+//           if (typeof enrichedPeriod.teacher === 'string') {
+//             enrichedPeriod.teacher = teacherMap[enrichedPeriod.teacher] || { name: 'Unknown Teacher' };
+//           }
+
+//           return enrichedPeriod;
+//         });
+//       }
+//     }
+
+//     const timetable = new Timetable({
+//       departmentId,
+//       semester: Number(targetSemester),
+//       academicYear,
+//       divisions: divisions.map(name => ({
+//         division_name: name,
+//         schedule: schedule[name] || {},
+//       })),
+//       status: 'draft',
+//       generation_metadata: {
+//         fitness_score: metadata.fitnessScore,
+//         generation_count: metadata.generation_count || metadata.generations || 0,
+//         conflicts_resolved: metadata.conflictsResolved,
+//         algorithm_version: metadata.algorithm_version,
+//         generated_at: new Date(),
+//       },
+//     });
+
+//     await timetable.save();
+//     const savedTimetable = await Timetable.findById(timetable._id).lean();
+
+//     res.status(201).json({
+//       success: true,
+//       message: 'Timetable generated successfully',
+//       data: savedTimetable,
+//     });
+
+//   } catch (error) {
+//     next(createError(500, 'Error in timetable generation'));
+//   }
+// }
+
+// static async generateTimetable(req, res, next) {
+//   try {
+//     console.log("📥 Incoming Request Body:", JSON.stringify(req.body, null, 2));
+
+//     const {
+//       departmentId,
+//       semester,
+//       academicYear,
+//       divisions,
+//       subjects = [],
+//       teachers = [],
+//       classes = [],
+//     } = req.body;
+
+//     // Basic required checks
+//     if (!departmentId || !semester || !academicYear || !Array.isArray(divisions) || divisions.length === 0) {
+//       return next(createError(400, 'Missing required fields: departmentId, semester, academicYear, or divisions'));
+//     }
+
+//     const targetSemester = String(semester).trim();
+//     const normalize = (val) => String(val ?? '').trim();
+
+//     // Filter by semester
+//     const filteredSubjects = subjects.filter(s => normalize(s.semester) === targetSemester);
+//     const filteredTeachers = teachers.filter(t => normalize(t.semester) === targetSemester);
+//     const filteredClasses = classes.filter(c => normalize(c.semester) === targetSemester);
+
+//     // Handle empty lists clearly
+//     if (!filteredSubjects.length) {
+//       return next(createError(400, `No subjects found for semester ${targetSemester}`));
+//     }
+//     if (!filteredTeachers.length) {
+//       return next(createError(400, `No teachers found for semester ${targetSemester}. Please assign teachers to subjects.`));
+//     }
+//     if (!filteredClasses.length) {
+//       return next(createError(400, `No classes found for semester ${targetSemester}`));
+//     }
+
+//     // Create GA instance
+//     const geneticAlgorithm = new GeneticAlgorithm({
+//       populationSize: 50,
+//       maxGenerations: 100,
+//       mutationRate: 0.1,
+//       crossoverRate: 0.8,
+//       elitismRate: 0.1,
+//       departmentId,
+//       semester: targetSemester,
+//       academicYear,
+//       divisions,
+//     });
+
+//     // Generate schedule
+//     const { schedule, metadata } = await geneticAlgorithm.generateSchedule({
+//       divisions,
+//       subjects: filteredSubjects,
+//       teachers: filteredTeachers,
+//       classes: filteredClasses,
+//     });
+
+//     if (!schedule || Object.keys(schedule).length === 0) {
+//       return next(createError(500, 'Failed to generate a valid schedule'));
+//     }
+
+//     // Maps to lookup full data
+//     // const subjectMap = Object.fromEntries(filteredSubjects.map(s => [String(s._id), { ...s, subjectName: s.name }]));
+//     const subjectMap = Object.fromEntries(
+//   filteredSubjects.map(s => [
+//     String(s._id),
+//     { ...s, subjectName: s.subjectName || s.name || 'Unnamed Subject' }
+//   ])
+// );
+
+//     const teacherMap = Object.fromEntries(filteredTeachers.map(t => [String(t._id), t]));
+
+//     // Enrich schedule slots
+//     for (const division of Object.keys(schedule)) {
+//       const daySchedule = schedule[division];
+//       for (const day of Object.keys(daySchedule)) {
+//         daySchedule[day] = daySchedule[day].map(period => {
+//           if (!period) return null;
+//           const enriched = { ...period };
+
+//           if (typeof enriched.subject === 'string') {
+//             enriched.subject = subjectMap[enriched.subject] || { subjectName: 'Unknown Subject' };
+//           }
+//           if (typeof enriched.teacher === 'string') {
+//             enriched.teacher = teacherMap[enriched.teacher] || { name: 'Unknown Teacher' };
+//           }
+//           return enriched;
+//         });
+//       }
+//     }
+
+//     // Save
+//     const timetable = new Timetable({
+//       departmentId,
+//       semester: Number(targetSemester),
+//       academicYear,
+//       divisions: divisions.map(name => ({
+//         division_name: name,
+//         schedule: schedule[name] || {},
+//       })),
+//       status: 'draft',
+//       generation_metadata: {
+//         fitness_score: metadata.fitnessScore,
+//         generation_count: metadata.generation_count || metadata.generations || 0,
+//         conflicts_resolved: metadata.conflictsResolved,
+//         algorithm_version: metadata.algorithm_version,
+//         generated_at: new Date(),
+//       },
+//     });
+
+//     await timetable.save();
+//     const savedTimetable = await Timetable.findById(timetable._id).lean();
+
+//     res.status(201).json({
+//       success: true,
+//       message: 'Timetable generated successfully',
+//       data: savedTimetable,
+//     });
+
+//   } catch (error) {
+//     console.error("💥 Timetable generation failed:", error);                    // <-- log original stack
+//     return next(createError(500, error.message || 'Error in timetable generation'));
+//   }
+// }
+
 static async generateTimetable(req, res, next) {
   try {
     console.log("📥 Incoming Request Body:", JSON.stringify(req.body, null, 2));
@@ -3528,41 +4031,30 @@ static async generateTimetable(req, res, next) {
       classes = [],
     } = req.body;
 
+    // Basic required checks
     if (!departmentId || !semester || !academicYear || !Array.isArray(divisions) || divisions.length === 0) {
-      console.log("❗ Missing required fields");
       return next(createError(400, 'Missing required fields: departmentId, semester, academicYear, or divisions'));
     }
 
     const targetSemester = String(semester).trim();
     const normalize = (val) => String(val ?? '').trim();
 
-    // console.log("🎯 Semester:", targetSemester);
-    // console.log("🏢 Department ID:", departmentId);
-    // console.log("📅 Academic Year:", academicYear);
-    // console.log("👥 Divisions:", divisions.join(', '));
+    // Filter by semester
+    const filteredSubjects = subjects.filter(s => normalize(s.semester) === targetSemester);
+    const filteredTeachers = teachers.filter(t => normalize(t.semester) === targetSemester);
+    const filteredClasses = classes.filter(c => normalize(c.semester) === targetSemester);
 
-    // Normalize semester fields for filtering
-    const filteredSubjects = subjects.filter(
-      (s) => normalize(s.semester) === targetSemester
-    );
-
-    const filteredTeachers = teachers.filter(
-      (t) => normalize(t.semester) === targetSemester
-    );
-
-    const filteredClasses = classes.filter(
-      (c) => normalize(c.semester) === targetSemester
-    );
-
-    // console.log("📚 Filtered Subjects:", filteredSubjects.length);
-    // console.log("👩‍🏫 Filtered Teachers:", filteredTeachers.length);
-    // console.log("🏫 Filtered Classes:", filteredClasses.length);
-
-    if (!filteredSubjects.length || !filteredTeachers.length || !filteredClasses.length) {
-      return next(createError(400, `Subjects, teachers, and classes must not be empty for semester ${semester}`));
+    if (!filteredSubjects.length) {
+      return next(createError(400, `No subjects found for semester ${targetSemester}`));
+    }
+    if (!filteredTeachers.length) {
+      return next(createError(400, `No teachers found for semester ${targetSemester}. Please assign teachers to subjects.`));
+    }
+    if (!filteredClasses.length) {
+      return next(createError(400, `No classes found for semester ${targetSemester}`));
     }
 
-    // 🧬 Run genetic algorithm
+    // Create GA instance
     const geneticAlgorithm = new GeneticAlgorithm({
       populationSize: 50,
       maxGenerations: 100,
@@ -3575,7 +4067,6 @@ static async generateTimetable(req, res, next) {
       divisions,
     });
 
-    // console.log("🧬 Running Genetic Algorithm...");
     const { schedule, metadata } = await geneticAlgorithm.generateSchedule({
       divisions,
       subjects: filteredSubjects,
@@ -3587,38 +4078,68 @@ static async generateTimetable(req, res, next) {
       return next(createError(500, 'Failed to generate a valid schedule'));
     }
 
-    // 📝 Logging summary
-    for (const [division, daySchedule] of Object.entries(schedule)) {
-      // console.log(`📘 Division: ${division}`);
-      for (const [day, periods] of Object.entries(daySchedule)) {
-        // console.log(`   📅 ${day} => ${periods.length} periods`);
-        periods.forEach((period, idx) => {
-          if (!period) {
-            // console.log(`      🕒 Period ${idx + 1}: Free Period`);
-            return;
+    // Create lookup maps
+    const subjectMap = Object.fromEntries(
+      filteredSubjects.map(s => [
+        String(s._id),
+        { ...s, subjectName: s.subjectName || s.name || 'Unnamed Subject' }
+      ])
+    );
+    const teacherMap = Object.fromEntries(
+      filteredTeachers.map(t => [String(t._id), t])
+    );
+
+    // Enrich slots via ID-based lookup (safer than typeof === 'string')
+    for (const division of Object.keys(schedule)) {
+      const daySchedule = schedule[division];
+      for (const day of Object.keys(daySchedule)) {
+        daySchedule[day] = daySchedule[day].map(period => {
+          if (!period) return null;
+
+          const enriched = { ...period };
+
+          // const subjectId =
+          //   enriched.subject?._id ||
+          //   enriched.subject?.id ||
+          //   enriched.subject;
+          // if (subjectId && subjectMap[subjectId]) {
+          //   enriched.subject = subjectMap[subjectId];
+          // } else {
+          //   enriched.subject = { subjectName: 'Unknown Subject' };
+          // }
+          const subjectId =
+  enriched.subject?._id ||
+  enriched.subject?.id ||
+  enriched.subject;
+
+if (subjectId && subjectMap[subjectId]) {
+  enriched.subject = subjectMap[subjectId];
+  // ✅ ensure 'name' is set for mongoose schema
+  enriched.subject.name =
+    enriched.subject.subjectName ||
+    enriched.subject.name ||
+    'Unknown Subject';
+} else {
+  enriched.subject = { name: 'Unknown Subject' };
+}
+
+
+          const teacherId =
+            enriched.teacher?._id ||
+            enriched.teacher?.id ||
+            enriched.teacher;
+          if (teacherId && teacherMap[teacherId]) {
+            enriched.teacher = teacherMap[teacherId];
+          } else {
+            enriched.teacher = { name: 'Unknown Teacher' };
           }
 
-          const subject = typeof period.subject === 'string'
-            ? period.subject
-            : period.subject?.subjectName || period.subject?.name || 'Unnamed Subject';
-
-          const teacher = typeof period.teacher === 'string'
-            ? period.teacher
-            : period.teacher?.name || 'Unnamed Teacher';
-
-          const classroom = typeof period.classroom === 'string'
-            ? period.classroom
-            : period.classroom?.room_number || period.classroom?.className || 'Unnamed Room';
-
-          const start = period.start_time || period.startTime || '??';
-          const end = period.end_time || period.endTime || '??';
-
-          // console.log(`      🕒 Period ${idx + 1} (${start}-${end}): ${subject} by ${teacher} in Room ${classroom}`);
+          return enriched;
         });
       }
     }
 
-    // 💾 Save timetable
+    // Save
     const timetable = new Timetable({
       departmentId,
       semester: Number(targetSemester),
@@ -3638,8 +4159,6 @@ static async generateTimetable(req, res, next) {
     });
 
     await timetable.save();
-    // console.log("💾 Timetable saved.");
-
     const savedTimetable = await Timetable.findById(timetable._id).lean();
 
     res.status(201).json({
@@ -3649,11 +4168,12 @@ static async generateTimetable(req, res, next) {
     });
 
   } catch (error) {
-    // console.error('❌ Error generating timetable:', error.message);
-    // console.error('🧵 Stack Trace:', error.stack);
-    next(createError(500, 'Error in timetable generation'));
+    console.error("💥 Timetable generation failed:", error);
+    return next(createError(500, error.message || 'Error in timetable generation'));
   }
 }
+
+
 
 
 
@@ -3734,37 +4254,61 @@ static async  validateTimetable(timetable) {
   //   }
   // }
 
+// static async getTimetables(req, res, next) {
+//   try {
+//    console.log("📌 [GET /timetables] Function hit");
+//     const { departmentId } = req.params;
+//     const { semester, academicYear, status } = req.query;
+
+//     // 🔎 1. Log input values
+//     console.log("📥 Params:", departmentId);
+//     console.log("📥 Query:", { semester, academicYear, status });
+
+//     const query = { departmentId };
+//     if (semester) query.semester = semester;
+//     if (academicYear) query.academicYear = academicYear;
+//     if (status) query.status = status;
+
+//     // 🔎 2. Log final MongoDB query
+//     console.log("📄 Final MongoDB query:", query);
+
+//     const timetables = await Timetable.find(query)
+//       .populate('departmentId', 'name')
+      
+//       .sort({ createdAt: -1 });
+
+//     // 🔎 3. Log result from DB
+//     console.log("📦 Found Timetables:", timetables.length, timetables);
+//     console.log(`✅ Found ${timetables.length} timetables`);
+// console.table(timetables.map(t => ({
+//   id: t._id.toString(),
+//   createdAt: t.createdAt,
+//   department: t.departmentId?.name
+// })));
+
+//     res.json({
+//       success: true,
+//       data: timetables
+//     });
+
+//   } catch (error) {
+//     console.error("🔥 Error fetching timetables:", error.message);
+//     next(createError(500, 'Error fetching timetables'));
+//   }
+// }
 static async getTimetables(req, res, next) {
   try {
-   console.log("📌 [GET /timetables] Function hit");
     const { departmentId } = req.params;
     const { semester, academicYear, status } = req.query;
-
-    // 🔎 1. Log input values
-    console.log("📥 Params:", departmentId);
-    console.log("📥 Query:", { semester, academicYear, status });
 
     const query = { departmentId };
     if (semester) query.semester = semester;
     if (academicYear) query.academicYear = academicYear;
     if (status) query.status = status;
 
-    // 🔎 2. Log final MongoDB query
-    console.log("📄 Final MongoDB query:", query);
-
     const timetables = await Timetable.find(query)
       .populate('departmentId', 'name')
-      
       .sort({ createdAt: -1 });
-
-    // 🔎 3. Log result from DB
-    console.log("📦 Found Timetables:", timetables.length, timetables);
-    console.log(`✅ Found ${timetables.length} timetables`);
-console.table(timetables.map(t => ({
-  id: t._id.toString(),
-  createdAt: t.createdAt,
-  department: t.departmentId?.name
-})));
 
     res.json({
       success: true,
@@ -3772,10 +4316,10 @@ console.table(timetables.map(t => ({
     });
 
   } catch (error) {
-    console.error("🔥 Error fetching timetables:", error.message);
     next(createError(500, 'Error fetching timetables'));
   }
 }
+
 
 
 
@@ -3822,16 +4366,104 @@ console.table(timetables.map(t => ({
 //   }
 // }
 
+// static async getTimetableById(req, res, next) {
+//   try {
+//     console.log("📌 [GET /timetables/:id] Function hit");
+// console.log("🆔 Timetable ID:", req.params.id);
+
+//     const timetable = await Timetable.findById(req.params.id);
+
+//     if (!timetable) {
+//       console.warn("⚠️ Timetable not found for ID:", req.params.id);
+
+//       return next(createError(404, 'Timetable not found'));
+//     }
+
+//     // If query ?stats=true is present, return statistics
+//     if (req.query.stats === 'true') {
+//       const statistics = {
+//         totalClasses: 0,
+//         labSessions: 0,
+//         theorySessions: 0,
+//         teacherUtilization: 0,
+//         roomUtilization: 0,
+//         fitness_score: timetable.generation_metadata?.fitness_score || 0
+//       };
+
+//       const uniqueTeachers = new Set();
+//       const uniqueRooms = new Set();
+
+//       console.log("📋 Starting statistics computation...");
+//       timetable.divisions?.forEach((division, divIndex) => {
+//         const schedule = division.schedule;
+//         if (!schedule || typeof schedule !== 'object') {
+//           console.log(`⚠️ Division ${divIndex} has no valid schedule`);
+//           return;
+//         }
+     
+//         Object.entries(schedule).forEach(([day, daySlots]) => {
+//           if (!Array.isArray(daySlots)) {
+//             console.log(`⚠️ ${day} in Division ${divIndex} is not an array`);
+//             return;
+//           }
+
+//           daySlots.forEach((slot, slotIndex) => {
+//             if (slot && typeof slot === 'object' && slot.subject) {
+//               statistics.totalClasses++;
+
+//               const type = (slot.type || 'theory').toLowerCase();
+//               if (type === 'lab') {
+//                 statistics.labSessions++;
+//               } else {
+//                 statistics.theorySessions++;
+//               }
+
+//               // Unique teacher/classroom usage
+//               if (slot.teacher) uniqueTeachers.add(slot.teacher.toString());
+//               if (slot.classroom) uniqueRooms.add(slot.classroom.toString());
+
+//               console.log(`✅ Slot on ${day}, period ${slotIndex + 1}:`, slot);
+//             } else {
+//               console.log(`🟡 Empty or invalid slot on ${day}, period ${slotIndex + 1}`);
+//             }
+//           });
+//         });
+//       });
+
+//       // Teacher utilization = total unique teacher-periods / totalClasses * 100
+//       statistics.teacherUtilization = uniqueTeachers.size > 0
+//         ? parseFloat(((statistics.totalClasses / (uniqueTeachers.size * 6 * 5)) * 100).toFixed(2))
+//         : 0;
+
+//       statistics.roomUtilization = uniqueRooms.size > 0
+//         ? parseFloat(((statistics.totalClasses / (uniqueRooms.size * 6 * 5)) * 100).toFixed(2))
+//         : 0;
+
+//       console.log("✅ Final Computed Statistics:", statistics);
+
+//       return res.status(200).json({
+//         success: true,
+//         data: { statistics }
+//       });
+//     }
+
+//     // Default: return full timetable
+//     return res.status(200).json({
+//       success: true,
+//       data: { timetable }
+//     });
+
+//   } catch (err) {
+//     console.error('🔴 Error in getTimetableById:', err);
+//     return next(createError(500, 'Error fetching timetable. Please check the ID and schedule structure.'));
+//   }
+// }
+
 static async getTimetableById(req, res, next) {
   try {
-    console.log("📌 [GET /timetables/:id] Function hit");
-console.log("🆔 Timetable ID:", req.params.id);
-
     const timetable = await Timetable.findById(req.params.id);
 
     if (!timetable) {
-      console.warn("⚠️ Timetable not found for ID:", req.params.id);
-
       return next(createError(404, 'Timetable not found'));
     }
 
@@ -3849,21 +4481,14 @@ console.log("🆔 Timetable ID:", req.params.id);
       const uniqueTeachers = new Set();
       const uniqueRooms = new Set();
 
-      console.log("📋 Starting statistics computation...");
-      timetable.divisions?.forEach((division, divIndex) => {
+      timetable.divisions?.forEach((division) => {
         const schedule = division.schedule;
-        if (!schedule || typeof schedule !== 'object') {
-          console.log(`⚠️ Division ${divIndex} has no valid schedule`);
-          return;
-        }
-     
-        Object.entries(schedule).forEach(([day, daySlots]) => {
-          if (!Array.isArray(daySlots)) {
-            console.log(`⚠️ ${day} in Division ${divIndex} is not an array`);
-            return;
-          }
+        if (!schedule || typeof schedule !== 'object') return;
 
-          daySlots.forEach((slot, slotIndex) => {
+        Object.entries(schedule).forEach(([_, daySlots]) => {
+          if (!Array.isArray(daySlots)) return;
+
+          daySlots.forEach((slot) => {
             if (slot && typeof slot === 'object' && slot.subject) {
               statistics.totalClasses++;
 
@@ -3874,19 +4499,13 @@ console.log("🆔 Timetable ID:", req.params.id);
                 statistics.theorySessions++;
               }
 
-              // Unique teacher/classroom usage
               if (slot.teacher) uniqueTeachers.add(slot.teacher.toString());
               if (slot.classroom) uniqueRooms.add(slot.classroom.toString());
-
-              console.log(`✅ Slot on ${day}, period ${slotIndex + 1}:`, slot);
-            } else {
-              console.log(`🟡 Empty or invalid slot on ${day}, period ${slotIndex + 1}`);
             }
           });
         });
       });
 
-      // Teacher utilization = total unique teacher-periods / totalClasses * 100
       statistics.teacherUtilization = uniqueTeachers.size > 0
         ? parseFloat(((statistics.totalClasses / (uniqueTeachers.size * 6 * 5)) * 100).toFixed(2))
         : 0;
@@ -3894,8 +4513,6 @@ console.log("🆔 Timetable ID:", req.params.id);
       statistics.roomUtilization = uniqueRooms.size > 0
         ? parseFloat(((statistics.totalClasses / (uniqueRooms.size * 6 * 5)) * 100).toFixed(2))
         : 0;
-
-      console.log("✅ Final Computed Statistics:", statistics);
 
       return res.status(200).json({
         success: true,
@@ -3910,7 +4527,6 @@ console.log("🆔 Timetable ID:", req.params.id);
     });
 
   } catch (err) {
-    console.error('🔴 Error in getTimetableById:', err);
     return next(createError(500, 'Error fetching timetable. Please check the ID and schedule structure.'));
   }
 }
@@ -4006,6 +4622,27 @@ static async getStatistics(req, res, next) {
     next(createError(500, 'Error fetching statistics'));
   }
 }
+
+static async transformFlatSchedule(flatSchedule, divisions, daysOfWeek, periodsPerDay) {
+  const formattedSchedule = {};
+
+  divisions.forEach((division) => {
+    const divisionId = division._id || division; // if it's string like "SYA"
+    formattedSchedule[divisionId] = {};
+
+    daysOfWeek.forEach((dayName, dayIndex) => {
+      formattedSchedule[divisionId][dayName] = [];
+
+      for (let period = 0; period < periodsPerDay; period++) {
+        const key = `${divisionId}_${dayIndex}_${period}`;
+        formattedSchedule[divisionId][dayName].push(flatSchedule[key] || null);
+      }
+    });
+  });
+
+  return formattedSchedule;
+}
+
 
 
 }

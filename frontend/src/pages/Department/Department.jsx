@@ -363,7 +363,7 @@ const Departments = () => {
   // Filter and search states
   const [filters, setFilters] = useState({
     search: '',
-    isActive: 'true',
+    isActive: true,
     sortBy: 'departmentName',
     sortOrder: 'asc',
     limit: 10,
@@ -379,7 +379,12 @@ const Departments = () => {
     try {
       setLoading(true);
       const queryParams = { ...filters, ...customFilters };
+
+        console.log('Query Params being sent =>', queryParams);
+    console.log('Calling API...');
       const response = await departmentService.getAllDepartments(queryParams);
+      console.log('API Response => ', response);
+
       
       if (response && response.departments) {
         setDepartments(response.departments);
