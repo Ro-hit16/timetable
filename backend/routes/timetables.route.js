@@ -688,5 +688,8 @@ router.get('/:id', TimetableController.getTimetableById);
 router.patch('/:id/status', TimetableController.updateStatus);
 router.delete('/:id', TimetableController.deleteTimetable);
 router.get('/:id/statistics', TimetableController.getStatistics);
+router.get('/:id/export', TimetableController.exportTimetable);
+
+
 
 export default router;

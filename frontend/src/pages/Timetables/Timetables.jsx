@@ -1207,6 +1207,8 @@ import {
   Filter,
   Search
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { toast } from 'react-toastify';
 import timetableService from '../../services/timetableService';
 import {
@@ -1279,7 +1281,7 @@ const Timetables = () => {
 
   useEffect(() => {
     const loadInitialData = async () => {
-      const res = await fetch('/api/classes');
+      const res = await fetch('/api/classes');       
       const data = await res.json();
       setClasses(data); // directly set
       console.log("✅ SETTING CLASSES TO:", data);
@@ -1287,7 +1289,7 @@ const Timetables = () => {
     loadInitialData();
   }, []);
 
-
+ 
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -1391,7 +1393,7 @@ const Timetables = () => {
         (s) => String(s.semester).trim() === String(generateForm.semester).trim()
       );
 
-      const filteredTeachers = teachers.filter(
+       const filteredTeachers = teachers.filter(
         (t) => String(t.semester).trim() === String(generateForm.semester).trim()
       );
 
@@ -1404,7 +1406,7 @@ const Timetables = () => {
         );
       }
 
-      // Final validations
+       // Final validations
       if (!filteredSubjects.length) {
         toast.error(`No subjects available for semester ${generateForm.semester}`);
         return;
@@ -1430,7 +1432,7 @@ const Timetables = () => {
         classes: filteredClasses
       };
 
-      console.log('🔄 Sending generation request:', filteredData);
+        console.log('🔄 Sending generation request:', filteredData);
 
       const result = await timetableService.generateTimetable(filteredData);
 
@@ -1629,27 +1631,52 @@ const Timetables = () => {
     }
   };
 
-  const handleExport = async (id, format) => {
-    try {
-      const response = await timetableService.exportTimetable(id, format);
+  // const handleExport = async (id, format) => {
+  //   try {
+  //     const response = await timetableService.exportTimetable(id, format);
 
-      if (format === 'csv') {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `timetable_${id}.csv`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-        toast.success('CSV exported successfully!');
-      } else {
-        toast.success('Export completed!');
-      }
-    } catch (error) {
-      toast.error('Failed to export timetable');
-      console.error('Export error:', error);
+  //     if (format === 'csv') {
+  //       const blob = await response.blob();
+  //       const url = window.URL.createObjectURL(blob);
+  //       const a = document.createElement('a');
+  //       a.href = url;
+  //       a.download = `timetable_${id}.csv`;
+  //       a.click();
+  //       window.URL.revokeObjectURL(url);
+  //       toast.success('CSV exported successfully!');
+  //     } else {
+  //       toast.success('Export completed!');
+  //     }
+  //   } catch (error) {
+  //     toast.error('Failed to export timetable');
+  //     console.error('Export error:', error);
+  //   }
+  // };
+
+
+ 
+
+const handleExport = async (divisionName, format) => {
+  try {
+    const response = await timetableService.exportTimetable(divisionName, format);
+
+    if (format === 'pdf') {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `timetable_${divisionName}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success('PDF exported successfully!');
+    } else {
+      toast.success('Export completed!');
     }
-  };
+  } catch (error) {
+    toast.error('Failed to export timetable');
+    console.error('Export error:', error);
+  }
+};
 
   const calculateStatistics = async (timetableData, teachers, classrooms) => {
     let totalClasses = 0;
@@ -1752,7 +1779,7 @@ const Timetables = () => {
     });
   }, [formattedTimetable]);
 
-  //console.log("🧠 Formatted Timetable in State:", formattedTimetable);
+   //console.log("🧠 Formatted Timetable in State:", formattedTimetable);
 
   // Render UI
   return (
@@ -2213,7 +2240,7 @@ const Timetables = () => {
   <div className="text-center py-8 text-gray-500">
     No divisions found or timetable not generated yet.
   </div>
-)} */}
+)} */  }
 
           {console.log("🧾 formattedTimetable:", formattedTimetable)}
           {console.log("📚 Subjects:", subjects)}

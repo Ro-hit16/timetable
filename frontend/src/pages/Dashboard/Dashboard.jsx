@@ -272,45 +272,134 @@ const Dashboard = () => {
   /** -----------------------------------------------
    * Corrected dashboard logic
    * ----------------------------------------------- */
-  const fetchDashboardData = async () => {
-    setLoading(true);
+  // const fetchDashboardData = async () => {
+  //   setLoading(true);
+  //   console.log("Fetching dashboard data...");
+  //   try {
+  //     const [
+  //       teachersRes,
+  //       departmentsRes,
+  //       timetablesRes,
+  //       subjectsRes
+  //     ] = await Promise.all([
+  //       teacherService.getAllTeachers({ limit: 9999 }),
+  //       departmentService.getDepartmentsForSelect({ limit: 9999 }),
+  //       timetableService.getAllTimetables({ limit: 9999 }),
+  //       subjectService.getAllSubjects({ limit: 9999 })
+  //     ]);
+
+
+  //     console.log("Teachers Response:", teachersRes);
+  //   console.log("Departments Response:", departmentsRes);
+  //   console.log("Timetables Response:", timetablesRes);
+  //   console.log("Subjects Response:", subjectsRes);
+
+  //     const teachers    = Array.isArray(teachersRes?.data)    ? teachersRes.data    : (teachersRes?.data?.teachers || []);
+      
+  //     const departments = Array.isArray(departmentsRes?.data) ? departmentsRes.data : (departmentsRes?.data?.departments || []);
+  //     const timetables  = Array.isArray(timetablesRes?.data)  ? timetablesRes.data  : (timetablesRes?.data?.timetables || []);
+  //     const subjects    = Array.isArray(subjectsRes?.data)    ? subjectsRes.data    : (subjectsRes?.data?.subjects || []);
+
+  //     setStats({
+  //       subjects: subjects.length,
+  //       teachers: teachers.length,
+  //       departments: departments.length,
+  //       activeTimetables: timetables.length
+  //     });
+
+  //     setRecentActivities([
+  //       { id: 1, action: 'New timetable published', details: 'TY CSE timetable uploaded', time: '3 hours ago', type: 'timetable' },
+  //       { id: 2, action: 'Teacher added', details: 'Prof. Sneha joined this week', time: '1 day ago', type: 'teacher' }
+  //     ]);
+
+  //   } catch (error) {
+  //     console.error('Dashboard fetch error:', error);
+  //     toast.error('Failed to load dashboard data');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+const fetchDashboardData = async () => {
+  setLoading(true);
+
+  let subjectsArray = [];
+  let teachersArray = [];
+  let departmentsArray = [];
+  let timetablesArray = [];
+
+  try {
+    // 1️⃣ Fetch Subjects
     try {
-      const [
-        teachersRes,
-        departmentsRes,
-        timetablesRes,
-        subjectsRes
-      ] = await Promise.all([
-        teacherService.getAllTeachers({ limit: 9999 }),
-        departmentService.getAllDepartments({ limit: 9999 }),
-        timetableService.getAllTimetables({ limit: 9999 }),
-        subjectService.getAllSubjects({ limit: 9999 })
-      ]);
-
-      const teachers    = Array.isArray(teachersRes?.data)    ? teachersRes.data    : (teachersRes?.data?.teachers || []);
-      const departments = Array.isArray(departmentsRes?.data) ? departmentsRes.data : (departmentsRes?.data?.departments || []);
-      const timetables  = Array.isArray(timetablesRes?.data)  ? timetablesRes.data  : (timetablesRes?.data?.timetables || []);
-      const subjects    = Array.isArray(subjectsRes?.data)    ? subjectsRes.data    : (subjectsRes?.data?.subjects || []);
-
-      setStats({
-        subjects: subjects.length,
-        teachers: teachers.length,
-        departments: departments.length,
-        activeTimetables: timetables.length
-      });
-
-      setRecentActivities([
-        { id: 1, action: 'New timetable published', details: 'TY CSE timetable uploaded', time: '3 hours ago', type: 'timetable' },
-        { id: 2, action: 'Teacher added', details: 'Prof. Sneha joined this week', time: '1 day ago', type: 'teacher' }
-      ]);
-
-    } catch (error) {
-      console.error('Dashboard fetch error:', error);
-      toast.error('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
+      console.log("Fetching subjects...");
+      const subjectsRes = await subjectService.getAllSubjects();
+      subjectsArray = subjectsRes.success && subjectsRes.data
+        ? (Array.isArray(subjectsRes.data) ? subjectsRes.data : subjectsRes.data.subjects || [])
+        : [];
+      console.log("Subjects fetched:", subjectsArray);
+    } catch (err) {
+      console.error("Error fetching subjects:", err);
+      toast.error("Failed to fetch subjects");
     }
-  };
+
+    // 2️⃣ Fetch Departments
+    try {
+      console.log("Fetching departments...");
+      departmentsArray = await departmentService.getDepartmentsForSelect();
+      console.log("Departments fetched:", departmentsArray);
+    } catch (err) {
+      console.error("Error fetching departments:", err);
+      toast.error("Failed to fetch departments");
+    }
+
+    // 3️⃣ Fetch Teachers
+    try {
+      console.log("Fetching teachers...");
+      const teachersRes = await fetch('/api/teachers');
+      const teachersData = await teachersRes.json();
+      teachersArray = teachersData.success
+        ? (Array.isArray(teachersData.data) ? teachersData.data : teachersData.data.teachers || [])
+        : [];
+      console.log("Teachers fetched:", teachersArray);
+    } catch (err) {
+      console.error("Error fetching teachers:", err);
+      toast.error("Failed to fetch teachers");
+    }
+
+    // 4️⃣ Fetch Timetables
+    try {
+      console.log("Fetching timetables...");
+      const timetablesRes = await timetableService.getAllTimetables();
+      timetablesArray = timetablesRes.success && timetablesRes.data
+        ? (Array.isArray(timetablesRes.data) ? timetablesRes.data : timetablesRes.data.timetables || [])
+        : [];
+      console.log("Timetables fetched:", timetablesArray);
+    } catch (err) {
+      console.error("Error fetching timetables:", err);
+      toast.error("Failed to fetch timetables");
+    }
+
+    // Set Dashboard stats
+    setStats({
+      subjects: subjectsArray.length,
+      teachers: teachersArray.length,
+      departments: departmentsArray.length,
+      activeTimetables: timetablesArray.length
+    });
+
+    console.log("Dashboard stats set:", {
+      subjects: subjectsArray.length,
+      teachers: teachersArray.length,
+      departments: departmentsArray.length,
+      activeTimetables: timetablesArray.length
+    });
+
+  } finally {
+    setLoading(false);
+    console.log("Dashboard loading finished");
+  }
+};
+
 
   const StatCard = ({ title, value, icon: Icon, color, bgColor }) => (
     <div className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow">

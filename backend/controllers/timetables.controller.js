@@ -2862,6 +2862,7 @@ import GeneticAlgorithm from '../utils/timetableGenerator.js';
 import subjectModel from '../models/subject.model.js';
 import teacherModel from '../models/teacher.model.js';
 import classModel from '../models/class.model.js';
+import PDFDocument from 'pdfkit';
 class TimetableController {
 
 // static async generateTimetable(req, res, next) {
@@ -4642,6 +4643,54 @@ static async transformFlatSchedule(flatSchedule, divisions, daysOfWeek, periodsP
 
   return formattedSchedule;
 }
+
+
+static async exportTimetable(req, res) {
+  try {
+    const { id } = req.params;
+    const { format } = req.query;
+
+    // Fetch timetable data by ID
+  const timetable = await Timetable.findById(id); // no populate
+
+
+    if (!timetable) {
+      return res.status(404).json({ message: 'Timetable not found' });
+    }
+
+    if (format === 'pdf') {
+      const doc = new PDFDocument({ margin: 30, size: 'A4' });
+      
+      // Set headers for download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=timetable_${id}.pdf`);
+
+      doc.pipe(res);
+
+      doc.fontSize(16).text(`Timetable - ${timetable.divisionName}`, { align: 'center' });
+      doc.moveDown();
+
+      // Example: draw a simple table
+      timetable.schedule.forEach(day => {
+        doc.fontSize(12).text(`Day: ${day.name}`);
+        day.slots.forEach(slot => {
+          doc.text(
+            `Period ${slot.period}: ${slot.subject?.name || 'Free'} - Teacher: ${slot.teacher?.name || 'N/A'} - Room: ${slot.classroom?.name || 'N/A'}`
+          );
+        });
+        doc.moveDown();
+      });
+
+      doc.end(); // Send PDF
+    } else {
+      res.status(400).json({ message: 'Unsupported export format' });
+    }
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to export timetable' });
+  }
+};
 
 
 

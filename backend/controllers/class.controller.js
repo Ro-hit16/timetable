@@ -13,11 +13,11 @@ export const deleteAllClasses = async (req, res) => {
     await Class.deleteMany({});
     res.json({ message: 'All classes deleted' });
   } catch (error) {
-    console.error('Error deleting all classes:', error);
+    //console.error('Error deleting all classes:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
-// export const createClass = async (req, res) => {
+
 //   try {
 //     const { className, classNumber } = req.body;
 //     const newClass = new Class({ className, classNumber });

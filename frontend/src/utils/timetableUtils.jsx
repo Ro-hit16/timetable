@@ -1710,500 +1710,9 @@ export const fetchClasses = async (setClasses) => {
   }
 };
 
-// // Render timetable grid
-// export const renderTimetableGrid = (division, formattedTimetable) => {
-//   console.log("🔍 Rendering timetable for division:", division);
-//   console.log("📊 Formatted timetable data:", formattedTimetable);
-
-//   const schedule = formattedTimetable?.formatted_schedule2?.[division];
-
-//   if (!schedule) {
-//     return <div className="text-center py-4 text-gray-500">No schedule available</div>;
-//   }
-
-//   return (
-//     <div className="border rounded-lg p-4 mb-6">
-//       <h2 className="text-xl font-semibold mb-2">Division {division}</h2>
-//       <table className="min-w-full table-auto border">
-//         <thead>
-//           <tr>
-//             <th className="border px-2 py-1">Day / Period</th>
-//             {timeSlots.map((slot) => (
-//               <th key={slot.period} className="border px-2 py-1">
-//                 P{slot.period}
-//               </th>
-//             ))}
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {days.map((day) => (
-//             <tr key={day}>
-//               <td className="border px-2 py-1 font-medium">{day}</td>
-//               {timeSlots.map((slot) => {
-//                 const cell = schedule[day]?.[slot.period - 1] || { subject: "Free", teacher: "" };
-//                 return (
-//                   <td key={slot.period} className="border px-2 py-1 text-center">
-//                     {cell.subject} <br />
-//                     <span className="text-sm text-gray-500">{cell.teacher}</span>
-//                   </td>
-//                 );
-//               })}
-//             </tr>
-//           ))}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// };
-
-// export const renderTimetableGrid = (divisionName, schedule) => {
-//   if (!schedule || typeof schedule !== 'object') {
-//     return (
-//       <div className="text-center py-4 text-gray-500">
-//         No schedule available for {divisionName}
-//       </div>
-//     );
-//   }
-
-//   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-//   const periods = [...Array(6)].map((_, i) => i + 1);
-
-//   return (
-//     <table className="w-full border-collapse border">
-//       <thead>
-//         <tr>
-//           <th className="border p-2 bg-gray-50">Day</th>
-//           {periods.map(period => (
-//             <th key={period} className="border p-2 bg-gray-50">P{period}</th>
-//           ))}
-//         </tr>
-//       </thead>
-//       <tbody>
-//         {days.map(day => (
-//           <tr key={day}>
-//             <td className="border p-2 font-semibold bg-gray-50">{day}</td>
-//             {periods.map(period => {
-//               const slot = schedule[day]?.[period-1];
-//               return (
-//                 <td key={period} className="border p-2 text-sm">
-//                   {slot ? (
-//                     <>
-//                       <div className="font-medium text-blue-900">
-//                         {slot.subject?.name || slot.subject}
-//                       </div>
-//                       <div className="text-xs text-gray-600">
-//                         {slot.teacher?.name || slot.teacher}
-//                       </div>
-//                       <div className="text-xs text-gray-400">
-//                         {slot.classroom || 'TBA'}
-//                       </div>
-//                     </>
-//                   ) : (
-//                     <span className="text-gray-400">Free</span>
-//                   )}
-//                 </td>
-//               );
-//             })}
-//           </tr>
-//         ))}
-//       </tbody>
-//     </table>
-//   );
-// };
-
-// export const renderTimetableGrid = (divisionName, formattedTimetable) => {
-//   if (!formattedTimetable || !Array.isArray(formattedTimetable.divisions)) {
-//     return (
-//       <div className="text-center py-4 text-gray-500">
-//         No timetable data available
-//       </div>
-//     );
-//   }
-
-//   const divisionData = formattedTimetable.divisions.find(
-//     (d) => d.division_name === divisionName
-//   );
-
-//   if (!divisionData || !divisionData.schedule) {
-//     return (
-//       <div className="text-center py-4 text-gray-500">
-//         No schedule available for {divisionName}
-//       </div>
-//     );
-//   }
-
-//   const schedule = divisionData.schedule;
-//   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-//   const periods = [...Array(6)].map((_, i) => i + 1);
-
-//   return (
-//     <table className="w-full border-collapse border">
-//       <thead>
-//         <tr>
-//           <th className="border p-2 bg-gray-50">Day</th>
-//           {periods.map((period) => (
-//             <th key={period} className="border p-2 bg-gray-50">P{period}</th>
-//           ))}
-//         </tr>
-//       </thead>
-//       <tbody>
-//         {days.map((day) => (
-//           <tr key={day}>
-//             <td className="border p-2 font-semibold bg-gray-50">{day}</td>
-//             {periods.map((period) => {
-//               const slot = schedule[day]?.[period - 1];
-//               return (
-//                 <td key={period} className="border p-2 text-sm">
-//                   {slot ? (
-//                     <>
-//                       <div className="font-medium text-blue-900">
-//                         {slot.subject?.name || slot.subject}
-//                       </div>
-//                       <div className="text-xs text-gray-600">
-//                         {slot.teacher?.name || slot.teacher}
-//                       </div>
-//                       <div className="text-xs text-gray-400">
-//                         {slot.classroom || 'TBA'}
-//                       </div>
-//                     </>
-//                   ) : (
-//                     <span className="text-gray-400">Free</span>
-//                   )}
-//                 </td>
-//               );
-//             })}
-//           </tr>
-//         ))}
-//       </tbody>
-//     </table>
-//   );
-// };
-
-// export const renderTimetableGrid = (divisionName, schedule) => {
-//   if (!schedule || typeof schedule !== 'object') {
-//     return (
-//       <div className="text-center py-4 text-gray-500">
-//         No schedule available for {divisionName}
-//       </div>
-//     );
-//   }
-
-//   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-//   const periods = [...Array(6)].map((_, i) => i + 1);
-
-//   return (
-//     <div className="overflow-x-auto">
-//       <h2 className="text-lg font-bold mb-2 text-center text-blue-700">
-//         Timetable for {divisionName}
-//       </h2>
-//       <table className="w-full border-collapse border">
-//         <thead>
-//           <tr>
-//             <th className="border p-2 bg-gray-100">Day</th>
-//             {periods.map((period) => (
-//               <th key={period} className="border p-2 bg-gray-100">P{period}</th>
-//             ))}
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {days.map((day) => (
-//             <tr key={day}>
-//               <td className="border p-2 font-semibold bg-gray-50">{day}</td>
-//               {periods.map((period) => {
-//                 const slot = schedule[day]?.[period - 1];
-//                 return (
-//                   <td key={period} className="border p-2 text-sm">
-//                     {slot ? (
-//                       <>
-//                         <div className="font-medium text-blue-900">
-//                           {slot.subject?.name || slot.subject}
-//                         </div>
-//                         <div className="text-xs text-gray-600">
-//                           {slot.teacher?.name || slot.teacher}
-//                         </div>
-//                         <div className="text-xs text-gray-400">
-//                           {slot.classroom || 'TBA'}
-//                         </div>
-//                       </>
-//                     ) : (
-//                       <span className="text-gray-400">Free</span>
-//                     )}
-//                   </td>
-//                 );
-//               })}
-//             </tr>
-//           ))}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// };
-
-//imp
-// export const renderTimetableGrid = (divisionName, schedule) => {
-//     console.log("📅 Schedule received in renderTimetableGrid for", divisionName, schedule);
-//   if (!schedule || typeof schedule !== 'object') {
-//     return (
-//       <div className="text-center py-4 text-gray-500">
-//         No schedule available for {divisionName}
-//       </div>
-//     );
-//   }
-
-//   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-//   const periods = Array.from({ length: 6 }, (_, i) => i + 1);
-
-//   return (
-//     <div className="overflow-x-auto">
-//       <h2 className="text-lg font-bold mb-2 text-center text-blue-700">
-//         Timetable for {divisionName}
-//       </h2>
-//       <table className="w-full border-collapse border">
-//         <thead>
-//           <tr>
-//             <th className="border p-2 bg-gray-100">Day</th>
-//             {periods.map((period) => (
-//               <th key={period} className="border p-2 bg-gray-100">P{period}</th>
-//             ))}
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {days.map((day) => (
-//             <tr key={day}>
-//               <td className="border p-2 font-semibold bg-gray-50">{day}</td>
-//               {periods.map((period) => {
-//                 const slot = schedule?.[day]?.[period - 1];
-
-//                 const subject =
-//                   typeof slot?.subject === 'object'
-//                     ? slot.subject?.name
-//                     : slot?.subject;
-
-//                 const teacher =
-//                   typeof slot?.teacher === 'object'
-//                     ? slot.teacher?.name
-//                     : slot?.teacher;
-
-//                 const classroom = slot?.classroom || 'TBA';
-
-//                 return (
-//                   <td key={period} className="border p-2 text-sm">
-//                     {slot ? (
-//                       <>
-//                         <div className="font-medium text-blue-900">{subject}</div>
-//                         <div className="text-xs text-gray-600">{teacher}</div>
-//                         <div className="text-xs text-gray-400">{classroom}</div>
-//                       </>
-//                     ) : (
-//                       <span className="text-gray-400">Free</span>
-//                     )}
-//                   </td>
-//                 );
-//               })}
-//             </tr>
-//           ))}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// };
 
 
-// Load timetables
-// export const loadTimetables = async (filters, api, setTimetables, setFormattedTimetable, setLoading) => {
-//   if (!filters.department) return;
-
-//   setLoading(true);
-//   try {
-//     const result = await api.getTimetables(filters.department, {
-//       semester: filters.semester,
-//       academicYear: filters.academicYear
-//     });
-
-//     if (result.success) {
-//       setTimetables(result.data);
-//       formatTimetableData(result.data, setFormattedTimetable);
-//     }
-//   } catch (error) {
-//     console.error('Error loading timetables:', error);
-//     toast.error('Failed to load timetables');
-//   } finally {
-//     setLoading(false);
-//   }
-// };
-// Update the loadTimetables function to handle nested subjects
-
-
-// export const renderTimetableGrid = (divisionName, schedule) => {
-//   console.log("📅 Schedule received in renderTimetableGrid for", divisionName, schedule);
-//   if (!schedule || typeof schedule !== 'object') {
-//     return (
-//       <div className="text-center py-4 text-gray-500">
-//         No schedule available for {divisionName}
-//       </div>
-//     );
-//   }
-
-//   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-//   const periods = Array.from({ length: 6 }, (_, i) => i + 1);
-
-//   return (
-//     <div className="overflow-x-auto">
-//       <h2 className="text-lg font-bold mb-2 text-center text-blue-700">
-//         Timetable for {divisionName}
-//       </h2>
-//       <table className="w-full border-collapse border">
-//         <thead>
-//           <tr>
-//             <th className="border p-2 bg-gray-100">Day</th>
-//             {periods.map((period) => (
-//               <th key={period} className="border p-2 bg-gray-100">P{period}</th>
-//             ))}
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {days.map((day) => (
-//             <tr key={day}>
-//               <td className="border p-2 font-semibold bg-gray-50">{day}</td>
-//               {periods.map((period) => {
-//                 const slot = schedule?.[day]?.[period - 1];
-
-//                 // DEBUG LOG
-//                 console.log("🧪 slot.subject object:", slot?.subject);
-
-//                 // SUBJECT NAME FALLBACK
-//                 let subjectDisplay = "No Subject";
-//                 if (slot?.subject) {
-//                   if (typeof slot.subject === 'object') {
-//                     subjectDisplay = slot.subject.name || slot.subject.subjectName || slot.subject.type || `ID: ${slot.subject._id}`;
-//                   } else {
-//                     subjectDisplay = slot.subject;
-//                   }
-//                 }
-
-//                 // TEACHER NAME FALLBACK
-//                 let teacherDisplay = "No Teacher";
-//                 if (slot?.teacher) {
-//                   if (typeof slot.teacher === 'object') {
-//                     teacherDisplay = slot.teacher.name || `ID: ${slot.teacher._id}`;
-//                   } else {
-//                     teacherDisplay = slot.teacher;
-//                   }
-//                 }
-
-//                 const classroom = slot?.classroom || "TBA";
-
-//                 // DEBUG LOGS
-//                 console.log(`📚 Subject for ${day} P${period}:`, subjectDisplay);
-//                 console.log(`👨‍🏫 Teacher for ${day} P${period}:`, teacherDisplay);
-
-//                 return (
-//                   <td key={period} className="border p-2 text-sm">
-//                     {slot ? (
-//                       <>
-//                         <div className="font-medium text-blue-900">{subjectDisplay}</div>
-//                         <div className="text-xs text-gray-600">{teacherDisplay}</div>
-//                         <div className="text-xs text-gray-400">{classroom}</div>
-//                       </>
-//                     ) : (
-//                       <span className="text-gray-400">Free</span>
-//                     )}
-//                   </td>
-//                 );
-//               })}
-//             </tr>
-//           ))}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// };
-
-
-// export const renderTimetableGrid = (divisionName, schedule) => {
-//   console.log("📅 Schedule received in renderTimetableGrid for", divisionName, schedule);
-//   if (!schedule || typeof schedule !== 'object') {
-//     return (
-//       <div className="text-center py-4 text-gray-500">
-//         No schedule available for {divisionName}
-//       </div>
-//     );
-//   }
-
-//   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-//   const periods = Array.from({ length: 6 }, (_, i) => i + 1);
-
-//   return (
-//     <div className="overflow-x-auto">
-//       <h2 className="text-lg font-bold mb-2 text-center text-blue-700">
-//         Timetable for {divisionName}
-//       </h2>
-//       <table className="w-full border-collapse border">
-//         <thead>
-//           <tr>
-//             <th className="border p-2 bg-gray-100">Day</th>
-//             {periods.map((period) => (
-//               <th key={period} className="border p-2 bg-gray-100">P{period}</th>
-//             ))}
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {days.map((day) => (
-//             <tr key={day}>
-//               <td className="border p-2 font-semibold bg-gray-50">{day}</td>
-//               {periods.map((period) => {
-//                 const slot = schedule?.[day]?.[period - 1];
-
-//                 // 🧪 DEBUG
-//                 console.log("🧪 Slot data:", slot);
-
-//                 // ✅ SUBJECT NAME
-//                 let subjectDisplay = "No Subject";
-//                 if (slot?.subject) {
-//                   if (typeof slot.subject === 'object') {
-//                     subjectDisplay = slot.subject.name ||
-//                                      slot.subject.subjectName ||
-//                                      `${slot.subject.type || "Type"} (${slot.subject._id.slice(-4)})`;
-//                   } else {
-//                     subjectDisplay = String(slot.subject);
-//                   }
-//                 }
-
-//                 // ✅ TEACHER NAME
-//                 let teacherDisplay = "No Teacher";
-//                 if (slot?.teacher) {
-//                   if (typeof slot.teacher === 'object') {
-//                     teacherDisplay = slot.teacher.name || `ID: ${slot.teacher._id.slice(-4)}`;
-//                   } else {
-//                     teacherDisplay = String(slot.teacher);
-//                   }
-//                 }
-
-//                 const classroom = slot?.classroom || "TBA";
-
-//                 return (
-//                   <td key={period} className="border p-2 text-sm">
-//                     {slot ? (
-//                       <>
-//                         <div className="font-medium text-blue-900">{subjectDisplay}</div>
-//                         <div className="text-xs text-gray-600">{teacherDisplay}</div>
-//                         <div className="text-xs text-gray-400">{classroom}</div>
-//                       </>
-//                     ) : (
-//                       <span className="text-gray-400">Free</span>
-//                     )}
-//                   </td>
-//                 );
-//               })}
-//             </tr>
-//           ))}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// }; 
-
- 
+//imp imp 
 // export const renderTimetableGrid = (
 //   divisionName,
 //   schedule,
@@ -2214,36 +1723,33 @@ export const fetchClasses = async (setClasses) => {
 //     return (
 //       <div className="text-center py-4 text-gray-500">
 //         No timetable data available
-//       </div> 
+//       </div>
 //     );
 //   }
 
 //   const days = Object.keys(schedule);
-//   const periodsPerDay = Math.max(
-//     ...days.map((day) => schedule[day]?.length || 0)
-//   );
+//   const periodsPerDay = Math.max(...days.map(day => schedule[day]?.length || 0));
 
+//   // safe subject-name
 //   const getSubjectNameById = (id) => {
-//     const subject = subjects.find((s) => s._id === id);
-//     return subject ? subject.name : "Unnamed Subject";
+//     if (!id) return "Unnamed Subject";
+//     const s = subjects.find(sub => sub._id === id);
+//     return s ? (s.name || s.subjectName) : "Unnamed Subject";
 //   };
 
 //   const getClassroomNameById = (id) => {
-//     const cls = classrooms.find((c) => c._id === id);
-//     return cls ? cls.name : `Room ${id?.slice?.(-4) || "N/A"}`;
+//     if (!id) return "N/A";
+//     const c = classrooms.find(cls => cls._id === id);
+//     return c ? (c.name || c.room_number || c.classNumber) : `Room ${id?.slice?.(-4) || "N/A"}`;
 //   };
 
 //   return (
 //     <table className="w-full table-auto border text-sm">
 //       <thead>
 //         <tr>
-//           <th className="border px-2 py-1 text-left bg-gray-100">
-//             Day / Period
-//           </th>
-//           {Array.from({ length: periodsPerDay }).map((_, periodIdx) => (
-//             <th key={periodIdx} className="border px-2 py-1 bg-gray-100">
-//               {periodIdx + 1}
-//             </th>
+//           <th className="border px-2 py-1 text-left bg-gray-100">Day / Period</th>
+//           {Array.from({ length: periodsPerDay }).map((_, p) => (
+//             <th key={p} className="border px-2 py-1 bg-gray-100">{p + 1}</th>
 //           ))}
 //         </tr>
 //       </thead>
@@ -2255,18 +1761,23 @@ export const fetchClasses = async (setClasses) => {
 //               if (!slot) {
 //                 return (
 //                   <td key={periodIdx} className="border px-2 py-1 text-gray-400">
-//                     Free
+//                    Library
 //                   </td>
 //                 );
 //               }
 
-//               const subjectId = typeof slot.subject === "object" ? slot.subject._id : slot.subject;
-//               const classroomId = typeof slot.classroom === "object" ? slot.classroom._id : slot.classroom;
-//               const teacherName = typeof slot.teacher === "object"
-//                 ? slot.teacher.name
-//                 : slot.teacher || "Unknown";
+//               const subjectName =
+//                 typeof slot.subject === "object"
+//                   ? (slot.subject.name || slot.subject.subjectName || "Unnamed Subject")
+//                   : getSubjectNameById(slot.subject);
 
-//               const subjectName = getSubjectNameById(subjectId);
+//               const teacherName =
+//                 typeof slot.teacher === "object"
+//                   ? (slot.teacher.name || "Unknown")
+//                   : (slot.teacher || "Unknown");
+
+//               // SAFE classroom lookup
+//               const classroomId = slot?.classroom?._id || slot?.classroom || null;
 //               const classroomName = getClassroomNameById(classroomId);
 
 //               return (
@@ -2283,7 +1794,7 @@ export const fetchClasses = async (setClasses) => {
 //     </table>
 //   );
 // };
- 
+
 // export const renderTimetableGrid = (
 //   divisionName,
 //   schedule,
@@ -2299,31 +1810,67 @@ export const fetchClasses = async (setClasses) => {
 //   }
 
 //   const days = Object.keys(schedule);
-//   const periodsPerDay = Math.max(
-//     ...days.map((day) => schedule[day]?.length || 0)
-//   );
+//   const periodsPerDay = Math.max(...days.map(day => schedule[day]?.length || 0));
 
+//   // safe subject-name
 //   const getSubjectNameById = (id) => {
-//     const subject = subjects.find((s) => s._id === id);
-//     return subject ? subject.name : "Unnamed Subject";
+//     if (!id) return "Unnamed Subject";
+//     const s = subjects.find(sub => sub._id === id);
+//     return s ? (s.name || s.subjectName) : "Unnamed Subject";
 //   };
 
 //   const getClassroomNameById = (id) => {
-//     const cls = classrooms.find((c) => c._id === id);
-//     return cls ? cls.name : `Room ${id?.slice?.(-4) || "N/A"}`;
+//     if (!id) return "N/A";
+//     const c = classrooms.find(cls => cls._id === id);
+//     return c ? (c.name || c.room_number || c.classNumber) : `Room ${id?.slice?.(-4) || "N/A"}`;
+//   };
+
+//   // Helper to merge consecutive identical slots safely
+//   const mergeConsecutiveSlots = (slots) => {
+//     if (!slots || !slots.length) return [];
+
+//     const merged = [];
+//     let current = slots[0] ? { ...slots[0], span: 1 } : null;
+
+//     for (let i = 1; i < slots.length; i++) {
+//       const prev = current;
+//       const curr = slots[i];
+
+//       // If either prev or curr is null, push prev and continue
+//       if (!prev || !curr) {
+//         if (prev) merged.push(prev);
+//         current = curr ? { ...curr, span: 1 } : null;
+//         continue;
+//       }
+
+//       const prevClassroom = prev?.classroom?._id || prev?.classroom;
+//       const currClassroom = curr?.classroom?._id || curr?.classroom;
+
+//       const prevTeacher = typeof prev.teacher === "object" ? prev.teacher._id : prev.teacher;
+//       const currTeacher = typeof curr.teacher === "object" ? curr.teacher._id : curr.teacher;
+
+//       const prevSubject = typeof prev.subject === "object" ? prev.subject._id : prev.subject;
+//       const currSubject = typeof curr.subject === "object" ? curr.subject._id : curr.subject;
+
+//       if (prevSubject === currSubject && prevTeacher === currTeacher && prevClassroom === currClassroom) {
+//         prev.span += 1; // merge into one block
+//       } else {
+//         merged.push(prev);
+//         current = { ...curr, span: 1 };
+//       }
+//     }
+
+//     if (current) merged.push(current);
+//     return merged;
 //   };
 
 //   return (
 //     <table className="w-full table-auto border text-sm">
 //       <thead>
 //         <tr>
-//           <th className="border px-2 py-1 text-left bg-gray-100">
-//             Day / Period
-//           </th>
-//           {Array.from({ length: periodsPerDay }).map((_, periodIdx) => (
-//             <th key={periodIdx} className="border px-2 py-1 bg-gray-100">
-//               {periodIdx + 1}
-//             </th>
+//           <th className="border px-2 py-1 text-left bg-gray-100">Day / Period</th>
+//           {Array.from({ length: periodsPerDay }).map((_, p) => (
+//             <th key={p} className="border px-2 py-1 bg-gray-100">{p + 1}</th>
 //           ))}
 //         </tr>
 //       </thead>
@@ -2331,34 +1878,30 @@ export const fetchClasses = async (setClasses) => {
 //         {days.map((day) => (
 //           <tr key={day}>
 //             <td className="border px-2 py-1 font-medium bg-gray-50">{day}</td>
-//             {schedule[day].map((slot, periodIdx) => {
+//             {mergeConsecutiveSlots(schedule[day]).map((slot, periodIdx) => {
 //               if (!slot) {
 //                 return (
-//                   <td key={periodIdx} className="border px-2 py-1 text-gray-400">
-//                     Free
+//                   <td key={periodIdx} className="border px-2 py-1 text-gray-400 text-center">
+//                     Library
 //                   </td>
 //                 );
 //               }
 
-//               // ✅ SUBJECT NAME DIRECTLY FROM OBJECT IF PRESENT
 //               const subjectName =
 //                 typeof slot.subject === "object"
-//                   ? slot.subject.name || slot.subject.subjectName || "Unnamed Subject"
+//                   ? (slot.subject.name || slot.subject.subjectName || "Unnamed Subject")
 //                   : getSubjectNameById(slot.subject);
 
-//               // ✅ TEACHER NAME
 //               const teacherName =
 //                 typeof slot.teacher === "object"
-//                   ? slot.teacher.name
-//                   : slot.teacher || "Unknown";
+//                   ? (slot.teacher.name || "Unknown")
+//                   : (slot.teacher || "Unknown");
 
-//               // ✅ CLASSROOM NAME FROM LOOKUP
-//               const classroomId =
-//                 typeof slot.classroom === "object" ? slot.classroom._id : slot.classroom;
+//               const classroomId = slot?.classroom?._id || slot?.classroom || null;
 //               const classroomName = getClassroomNameById(classroomId);
 
 //               return (
-//                  <td key={periodIdx} className="border px-2 py-1">
+//                 <td key={periodIdx} colSpan={slot.span} className="border px-2 py-1 text-center">
 //                   <div className="font-semibold">{subjectName}</div>
 //                   <div className="text-xs text-gray-700">{teacherName}</div>
 //                   <div className="text-xs text-gray-500">{classroomName}</div>
@@ -2371,6 +1914,348 @@ export const fetchClasses = async (setClasses) => {
 //     </table>
 //   );
 // };
+
+
+// export const renderTimetableGrid = (
+//   divisionName,
+//   schedule,
+//   subjects = [],
+//   classrooms = []
+// ) => {
+//   if (!schedule || typeof schedule !== "object") {
+//     return (
+//       <div className="text-center py-4 text-gray-500">
+//         No timetable data available
+//       </div>
+//     );
+//   }
+
+//   const days = Object.keys(schedule);
+//   const periodsPerDay = Math.max(...days.map(day => schedule[day]?.length || 0));
+
+//   const getSubjectNameById = (id) => {
+//     if (!id) return "Unnamed Subject";
+//     const s = subjects.find(sub => sub._id === id);
+//     return s ? (s.name || s.subjectName) : "Unnamed Subject";
+//   };
+
+//   const getClassroomNameById = (id) => {
+//     if (!id) return "N/A";
+//     const c = classrooms.find(cls => cls._id === id);
+//     return c ? (c.name || c.room_number || c.classNumber) : `Room ${id?.slice?.(-4) || "N/A"}`;
+//   };
+
+//   const mergeConsecutiveSlots = (slots) => {
+//     if (!slots || !slots.length) return [];
+
+//     const merged = [];
+//     let current = slots[0] ? { ...slots[0], span: 1 } : { span: 1, isFree: true };
+
+//     for (let i = 1; i < slots.length; i++) {
+//       const prev = current;
+//       const curr = slots[i] ? { ...slots[i], span: 1 } : { span: 1, isFree: true };
+
+//       const prevTeacher = prev?.teacher && (typeof prev.teacher === "object" ? prev.teacher._id : prev.teacher);
+//       const currTeacher = curr?.teacher && (typeof curr.teacher === "object" ? curr.teacher._id : curr.teacher);
+
+//       const prevSubject = prev?.subject && (typeof prev.subject === "object" ? prev.subject._id : prev.subject);
+//       const currSubject = curr?.subject && (typeof curr.subject === "object" ? curr.subject._id : curr.subject);
+
+//       const prevClassroom = prev?.classroom && (prev.classroom._id || prev.classroom);
+//       const currClassroom = curr?.classroom && (curr.classroom._id || curr.classroom);
+
+//       if (!prev.isFree && !curr.isFree &&
+//           prevSubject === currSubject &&
+//           prevTeacher === currTeacher &&
+//           prevClassroom === currClassroom) {
+//         prev.span += 1; // merge into one block
+//       } else {
+//         merged.push(prev);
+//         current = curr;
+//       }
+//     }
+
+//     merged.push(current);
+//     return merged;
+//   };
+
+//   return (
+//     <table className="w-full table-auto border text-sm">
+//       <thead>
+//         <tr>
+//           <th className="border px-2 py-1 text-left bg-gray-100">Day / Period</th>
+//           {Array.from({ length: periodsPerDay }).map((_, p) => (
+//             <th key={p} className="border px-2 py-1 bg-gray-100">{p + 1}</th>
+//           ))}
+//         </tr>
+//       </thead>
+//       <tbody>
+//         {days.map((day) => {
+//           const mergedSlots = mergeConsecutiveSlots(schedule[day]);
+//           const cells = [];
+//           let filled = 0;
+
+//           mergedSlots.forEach((slot, idx) => {
+//             const span = slot.span || 1;
+//             filled += span;
+
+//             if (slot.isFree) {
+//               cells.push(
+//                 <td key={idx} colSpan={span} className="border px-2 py-1 text-gray-400 text-center">
+//                   Free / Library
+//                 </td>
+//               );
+//             } else {
+//               const subjectName =
+//                 typeof slot.subject === "object"
+//                   ? (slot.subject.name || slot.subject.subjectName || "Unnamed Subject")
+//                   : getSubjectNameById(slot.subject);
+
+//               const teacherName =
+//                 typeof slot.teacher === "object"
+//                   ? (slot.teacher.name || "Unknown")
+//                   : (slot.teacher || "Unknown");
+
+//               const classroomId = slot?.classroom?._id || slot?.classroom || null;
+//               const classroomName = getClassroomNameById(classroomId);
+
+//               cells.push(
+//                 <td key={idx} colSpan={span} className="border px-2 py-1 text-center">
+//                   <div className="font-semibold">{subjectName}</div>
+//                   <div className="text-xs text-gray-700">{teacherName}</div>
+//                   <div className="text-xs text-gray-500">{classroomName}</div>
+//                 </td>
+//               );
+//             }
+//           });
+
+//           // Fill remaining empty slots if row has fewer than periodsPerDay
+//           if (filled < periodsPerDay) {
+//             const remaining = periodsPerDay - filled;
+//             cells.push(
+//               <td key="filler" colSpan={remaining} className="border px-2 py-1 text-gray-400 text-center">
+//                 Free / Library
+//               </td>
+//             );
+//           }
+
+//           return (
+//             <tr key={day}>
+//               <td className="border px-2 py-1 font-medium bg-gray-50">{day}</td>
+//               {cells}
+//             </tr>
+//           );
+//         })}
+//       </tbody>
+//     </table>
+//   );
+// };
+
+// export const renderTimetableGrid = (
+//   divisionName,
+//   schedule,
+//   subjects = [],
+//   classrooms = []
+// ) => {
+//   if (!schedule || typeof schedule !== "object") {
+//     return (
+//       <div className="text-center py-4 text-gray-500">
+//         No timetable data available
+//       </div>
+//     );
+//   }
+
+//   const days = Object.keys(schedule);
+//   const periodsPerDay = Math.max(...days.map(day => schedule[day]?.length || 0));
+
+//   const getSubjectNameById = (id) => {
+//     if (!id) return "Unnamed Subject";
+//     const s = subjects.find(sub => sub._id === id);
+//     return s ? (s.name || s.subjectName) : "Unnamed Subject";
+//   };
+
+//   const getClassroomNameById = (id) => {
+//     if (!id) return "N/A";
+//     const c = classrooms.find(cls => cls._id === id);
+//     return c ? (c.name || c.room_number || c.classNumber) : `Room ${id?.slice?.(-4) || "N/A"}`;
+//   };
+
+//   const mergeConsecutiveSlots = (slots) => {
+//     if (!slots || !slots.length) return [];
+
+//     const merged = [];
+//     let current = slots[0] ? { ...slots[0], span: 1 } : { span: 1, isFree: true };
+
+//     for (let i = 1; i < slots.length; i++) {
+//       const prev = current;
+//       const curr = slots[i] ? { ...slots[i], span: 1 } : { span: 1, isFree: true };
+
+//       const prevTeacher = prev?.teacher && (typeof prev.teacher === "object" ? prev.teacher._id : prev.teacher);
+//       const currTeacher = curr?.teacher && (typeof curr.teacher === "object" ? curr.teacher._id : curr.teacher);
+
+//       const prevSubject = prev?.subject && (typeof prev.subject === "object" ? prev.subject._id : prev.subject);
+//       const currSubject = curr?.subject && (typeof curr.subject === "object" ? curr.subject._id : curr.subject);
+
+//       const prevClassroom = prev?.classroom && (prev.classroom._id || prev.classroom);
+//       const currClassroom = curr?.classroom && (curr.classroom._id || curr.classroom);
+
+//       if (!prev.isFree && !curr.isFree &&
+//           prevSubject === currSubject &&
+//           prevTeacher === currTeacher &&
+//           prevClassroom === currClassroom) {
+//         prev.span += 1; // merge into one block
+//       } else {
+//         merged.push(prev);
+//         current = curr;
+//       }
+//     }
+
+//     merged.push(current);
+//     return merged;
+//   };
+
+//   // Insert recess into header
+//   // const buildHeader = () => {
+//   //   const headers = [];
+//   //   for (let i = 1; i <= periodsPerDay; i++) {
+//   //     headers.push(
+//   //       <th key={`p${i}`} className="border px-2 py-1 bg-gray-100">
+//   //         {i}
+//   //       </th>
+//   //     );
+//   //     if (i === 2) {
+//   //       headers.push(
+//   //         <th key="lunch" className="border px-2 py-1 bg-yellow-100">
+//   //           Recess<br />12:30–1:15
+//   //         </th>
+//   //       );
+//   //     }
+//   //     if (i === 4) {
+//   //       headers.push(
+//   //         <th key="short" className="border px-2 py-1 bg-yellow-100">
+//   //           Break<br />3:15–3:30
+//   //         </th>
+//   //       );
+//   //     }
+//   //   }
+//   //   return headers;
+//   // };
+
+//   // Period timings (example – adjust as per your college timings)
+// const periodTimings = {
+//   1: "9:00–10:00",
+//   2: "10:00–11:00",
+//   3: "11:15–12:15",
+//   4: "1:15–2:15",
+//   5: "2:15–3:15",
+//   6: "3:30–4:30",
+// };
+
+// const buildHeader = () => {
+//   const headers = [];
+//   for (let i = 1; i <= periodsPerDay; i++) {
+//     headers.push(
+//       <th key={`p${i}`} className="border px-2 py-1 bg-gray-100 w-28 h-16 text-center">
+//         <div className="font-medium">Period {i}</div>
+//         <div className="text-xs text-gray-600">{periodTimings[i]}</div>
+//       </th>
+//     );
+//     if (i === 2) {
+//       headers.push(
+//         <th key="lunch" className="border px-2 py-1 bg-yellow-100 w-28 h-16 text-center">
+//           <div className="font-medium">Recess</div>
+//           <div className="text-xs text-gray-600">12:30–1:15</div>
+//         </th>
+//       );
+//     }
+//     if (i === 4) {
+//       headers.push(
+//         <th key="short" className="border px-2 py-1 bg-yellow-100 w-28 h-16 text-center">
+//           <div className="font-medium">Break</div>
+//           <div className="text-xs text-gray-600">3:15–3:30</div>
+//         </th>
+//       );
+//     }
+//   }
+//   return headers;
+// };
+
+//   return (
+//     <table className="w-full table-fixed border text-sm">
+//       <thead>
+//         <tr>
+//           <th className="border px-2 py-1 text-left bg-gray-100">Day / Period</th>
+//           {buildHeader()}
+//         </tr>
+//       </thead>
+//       <tbody>
+//         {days.map((day) => {
+//           const mergedSlots = mergeConsecutiveSlots(schedule[day]);
+//           const cells = [];
+//           let filled = 0;
+
+//           mergedSlots.forEach((slot, idx) => {
+//             const span = slot.span || 1;
+//             filled += span;
+
+//             if (slot.isFree) {
+//               cells.push(
+//                 <td key={idx} colSpan={span} className="border px-2 py-1 text-gray-400 text-center">
+//                   Free / Library
+//                 </td>
+//               );
+//             } else {
+//               const subjectName =
+//                 typeof slot.subject === "object"
+//                   ? (slot.subject.name || slot.subject.subjectName || "Unnamed Subject")
+//                   : getSubjectNameById(slot.subject);
+
+//               const teacherName =
+//                 typeof slot.teacher === "object"
+//                   ? (slot.teacher.name || "Unknown")
+//                   : (slot.teacher || "Unknown");
+
+//               const classroomId = slot?.classroom?._id || slot?.classroom || null;
+//               const classroomName = getClassroomNameById(classroomId);
+
+//               cells.push(
+//                 <td key={idx} colSpan={span} className="border px-2 py-1 text-center">
+//                   <div className="font-semibold">{subjectName}</div>
+//                   <div className="text-xs text-gray-700">{teacherName}</div>
+//                   <div className="text-xs text-gray-500">{classroomName}</div>
+//                 </td>
+//               );
+//             }
+
+//             // Insert recess columns after period 2 and 4
+//             if (filled === 2) {
+//               cells.push(
+//                 <td key="lunch" className="border px-2 py-1 bg-yellow-50 text-center font-medium">
+//                   Recess<br />12:30–1:15
+//                 </td>
+//               );
+//             }
+//             if (filled === 4) {
+//               cells.push(
+//                 <td key="short" className="border px-2 py-1 bg-yellow-50 text-center font-medium">
+//                   Break<br />3:15–3:30
+//                 </td>
+//               );
+//             }
+//           });
+
+//           return (
+//             <tr key={day}>
+//               <td className="border px-2 py-1 font-medium bg-gray-50">{day}</td>
+//               {cells}
+//             </tr>
+//           );
+//         })}
+//       </tbody>
+//     </table>
+//   );
+// };
+
 
 export const renderTimetableGrid = (
   divisionName,
@@ -2389,7 +2274,6 @@ export const renderTimetableGrid = (
   const days = Object.keys(schedule);
   const periodsPerDay = Math.max(...days.map(day => schedule[day]?.length || 0));
 
-  // safe subject-name
   const getSubjectNameById = (id) => {
     if (!id) return "Unnamed Subject";
     const s = subjects.find(sub => sub._id === id);
@@ -2402,29 +2286,119 @@ export const renderTimetableGrid = (
     return c ? (c.name || c.room_number || c.classNumber) : `Room ${id?.slice?.(-4) || "N/A"}`;
   };
 
+  const mergeConsecutiveSlots = (slots) => {
+    if (!slots || !slots.length) return [];
+
+    const merged = [];
+    let current = slots[0] ? { ...slots[0], span: 1 } : { span: 1, isFree: true };
+
+    for (let i = 1; i < slots.length; i++) {
+      const prev = current;
+      const curr = slots[i] ? { ...slots[i], span: 1 } : { span: 1, isFree: true };
+
+      const prevTeacher = prev?.teacher && (typeof prev.teacher === "object" ? prev.teacher._id : prev.teacher);
+      const currTeacher = curr?.teacher && (typeof curr.teacher === "object" ? curr.teacher._id : curr.teacher);
+
+      const prevSubject = prev?.subject && (typeof prev.subject === "object" ? prev.subject._id : prev.subject);
+      const currSubject = curr?.subject && (typeof curr.subject === "object" ? curr.subject._id : curr.subject);
+
+      const prevClassroom = prev?.classroom && (prev.classroom._id || prev.classroom);
+      const currClassroom = curr?.classroom && (curr.classroom._id || curr.classroom);
+
+      if (!prev.isFree && !curr.isFree &&
+          prevSubject === currSubject &&
+          prevTeacher === currTeacher &&
+          prevClassroom === currClassroom) {
+        prev.span += 1; // merge into one block
+      } else {
+        merged.push(prev);
+        current = curr;
+      }
+    }
+
+    merged.push(current);
+    return merged;
+  };
+
+  // Period timings (adjust to your actual timetable)
+  const periodTimings = {
+    1: "10:30–11:30",
+    2: "11:30–12:30",
+    3: "1:15–2:15",
+    4: "2:15–3:15",
+    5: "3:30–4:30",
+    6: "4:30–5:30",
+  };
+
+  const buildHeader = () => {
+    const headers = [];
+    for (let i = 1; i <= periodsPerDay; i++) {
+      headers.push(
+        <th
+          key={`p${i}`}
+          className="border w-32 h-16 px-2 py-1 bg-gray-100 text-center align-middle"
+        >
+          <div className="font-medium">Period {i}</div>
+          <div className="text-xs text-gray-600">{periodTimings[i]}</div>
+        </th>
+      );
+      if (i === 2) {
+        headers.push(
+          <th
+            key="lunch"
+            className="border w-32 h-16 px-2 py-1 bg-yellow-100 text-center align-middle"
+          >
+            <div className="font-medium">Lunch Break</div>
+            <div className="text-xs text-gray-600">12:30–1:15</div>
+          </th>
+        );
+      }
+      if (i === 4) {
+        headers.push(
+          <th
+            key="short"
+            className="border w-32 h-16 px-2 py-1 bg-yellow-100 text-center align-middle"
+          >
+            <div className="font-medium"> Tea Break</div>
+            <div className="text-xs text-gray-600">3:15–3:30</div>
+          </th>
+        );
+      }
+    }
+    return headers;
+  };
+
   return (
-    <table className="w-full table-auto border text-sm">
+    <table className="w-full table-fixed border text-sm">
       <thead>
         <tr>
-          <th className="border px-2 py-1 text-left bg-gray-100">Day / Period</th>
-          {Array.from({ length: periodsPerDay }).map((_, p) => (
-            <th key={p} className="border px-2 py-1 bg-gray-100">{p + 1}</th>
-          ))}
+          <th className="border w-32 h-16 px-2 py-1 text-left bg-gray-100">
+            Day / Period
+          </th>
+          {buildHeader()}
         </tr>
       </thead>
       <tbody>
-        {days.map((day) => (
-          <tr key={day}>
-            <td className="border px-2 py-1 font-medium bg-gray-50">{day}</td>
-            {schedule[day].map((slot, periodIdx) => {
-              if (!slot) {
-                return (
-                  <td key={periodIdx} className="border px-2 py-1 text-gray-400">
-                    Free
-                  </td>
-                );
-              }
+        {days.map((day) => {
+          const mergedSlots = mergeConsecutiveSlots(schedule[day]);
+          const cells = [];
+          let filled = 0;
 
+          mergedSlots.forEach((slot, idx) => {
+            const span = slot.span || 1;
+            filled += span;
+
+            if (slot.isFree) {
+              cells.push(
+                <td
+                  key={idx}
+                  colSpan={span}
+                  className="border w-32 h-16 px-2 py-1 text-gray-400 text-center align-middle"
+                >
+                  Free / Library
+                </td>
+              );
+            } else {
               const subjectName =
                 typeof slot.subject === "object"
                   ? (slot.subject.name || slot.subject.subjectName || "Unnamed Subject")
@@ -2435,24 +2409,62 @@ export const renderTimetableGrid = (
                   ? (slot.teacher.name || "Unknown")
                   : (slot.teacher || "Unknown");
 
-              // SAFE classroom lookup
               const classroomId = slot?.classroom?._id || slot?.classroom || null;
               const classroomName = getClassroomNameById(classroomId);
 
-              return (
-                <td key={periodIdx} className="border px-2 py-1">
+              cells.push(
+                <td
+                  key={idx}
+                  colSpan={span}
+                  className="border w-32 h-16 px-2 py-1 text-center align-middle"
+                >
                   <div className="font-semibold">{subjectName}</div>
                   <div className="text-xs text-gray-700">{teacherName}</div>
                   <div className="text-xs text-gray-500">{classroomName}</div>
                 </td>
               );
-            })}
-          </tr>
-        ))}
+            }
+
+            // Insert recess columns after period 2 and 4
+            if (filled === 2) {
+              cells.push(
+                <td
+                  key="lunch"
+                  className="border w-32 h-16 px-2 py-1 bg-yellow-50 text-center font-medium align-middle"
+                >
+                  Recess<br />12:30–1:15
+                </td>
+              );
+            }
+            if (filled === 4) {
+              cells.push(
+                <td
+                  key="short"
+                  className="border w-32 h-16 px-2 py-1 bg-yellow-50 text-center font-medium align-middle"
+                >
+                  Break<br />3:15–3:30
+                </td>
+              );
+            }
+          });
+
+          return (
+            <tr key={day}>
+              <td className="border w-32 h-16 px-2 py-1 font-medium bg-gray-50 align-middle">
+                {day}
+              </td>
+              {cells}
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
 };
+
+
+
+
 
 
 
