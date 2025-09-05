@@ -1559,14 +1559,14 @@ const Timetables = () => {
 
   return rawSubjects.map(subject => ({
     _id: subject._id || subject.id,
-    // ✅ Prefer subject.subjectName first (matches DB field)
+     // ✅ Prefer subject.subjectName first (matches DB field)
     name: subject.subjectName || subject.name || subject.subject_name || 'Unnamed Subject',
     semester: String(subject.semester || subject.sem_id || '').trim(),
     type: subject.type || 'Theory',
     department: subject.department_id || subject.department,
     credits: subject.credits || 0,
     teachers: subject.teachers || []
-  }));
+   }));
 };
 
   const handleView = async (timetableId) => {

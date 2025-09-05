@@ -64,7 +64,7 @@
 import pdfParse from 'pdf-parse';
 import Teacher from '../models/teacher.model.js';
 import Subject from '../models/subject.model.js';
-import Semester from '../models/semester.model.js';
+
 import Department from '../models/department.model.js';
 import asyncHandler from '../utils/async-handler.js';
 import ApiError from '../utils/ApiError.js';

@@ -4,15 +4,15 @@ import { useAuth } from './context/AuthContext.js';
 import Layout from './components/Layout/Layout.jsx';
 import AuthPage from './pages/Auth/Login.jsx';
 import Dashboard from './pages/Dashboard/Dashboard.jsx';
-import Students from './pages/Students/Students.jsx';
+
 import Teachers from './pages/Teachers/Teachers.jsx';
 import Subjects from './pages/Subjects/Subjects.jsx';
-import Semesters from './pages/Semesters/Semesters.jsx';
+
 import Timetables from './pages/Timetables/Timetables.jsx';
 import Departments from './pages/Department/Department.jsx'; // ✅ Imported Departments
 import ProtectedRoute from './components/Common/ProtectedRoute.js';
 import ClassPage from './pages/Class/Class.jsx'; 
-import LectureForm from './components/Timetables/LectureForm.jsx';
+
 function App() {
   const { isAuthenticated, loading } = useAuth();
 
@@ -41,14 +41,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="students" 
-            element={
-              <ProtectedRoute>
-                <Students />
-              </ProtectedRoute>
-            } 
-          />
+          
           <Route 
             path="teachers" 
             element={
@@ -57,14 +50,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
-            <Route 
-            path="lectures" 
-            element={
-              <ProtectedRoute>
-                <LectureForm />
-              </ProtectedRoute>
-            } 
-          />
+            
           <Route 
             path="departments" // ✅ Added route for departments
             element={
@@ -89,14 +75,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="semesters" 
-            element={
-              <ProtectedRoute>
-                <Semesters />
-              </ProtectedRoute>
-            } 
-          />
+         
           <Route 
             path="timetables" 
             element={
