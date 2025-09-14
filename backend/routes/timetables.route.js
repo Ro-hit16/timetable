@@ -689,6 +689,7 @@ router.patch('/:id/status', TimetableController.updateStatus);
 router.delete('/:id', TimetableController.deleteTimetable);
 router.get('/:id/statistics', TimetableController.getStatistics);
 router.get('/:id/export', TimetableController.exportTimetable);
+router.post('/department-generate', TimetableController.generateDepartmentTimetable);
 
 
 

@@ -3400,29 +3400,63 @@ export default class GeneticAlgorithm {
     };
   }
 
+  // async generateSchedule({ divisions = [], subjects = [], teachers = [], classes = [] } = {}) {
+  //   if (!divisions.length || !subjects.length || !teachers.length || !classes.length) {
+  //     throw new Error('Insufficient data: divisions, subjects, teachers, or classes array is empty');
+  //   }
+  //   const startTime = Date.now();
+  //   const schedule = this.run(divisions, subjects, teachers, classes);
+
+  //   if (!schedule) {
+  //     throw new Error('Failed to generate valid schedule');
+  //   }
+
+  //   return {
+  //     schedule,
+  //     metadata: {
+  //       fitnessScore: this.fitness(schedule, subjects),
+  //       generation_count: this.maxGenerations,
+  //       population_size: this.populationSize,
+  //       conflictsResolved: true,
+  //       algorithm_version: '3.2.0',
+  //       executionTime: `${(Date.now() - startTime) / 1000} seconds`
+  //     }
+  //   };
+  // }
+
   async generateSchedule({ divisions = [], subjects = [], teachers = [], classes = [] } = {}) {
-    if (!divisions.length || !subjects.length || !teachers.length || !classes.length) {
-      throw new Error('Insufficient data: divisions, subjects, teachers, or classes array is empty');
-    }
-    const startTime = Date.now();
-    const schedule = this.run(divisions, subjects, teachers, classes);
-
-    if (!schedule) {
-      throw new Error('Failed to generate valid schedule');
-    }
-
-    return {
-      schedule,
-      metadata: {
-        fitnessScore: this.fitness(schedule, subjects),
-        generation_count: this.maxGenerations,
-        population_size: this.populationSize,
-        conflictsResolved: true,
-        algorithm_version: '3.2.0',
-        executionTime: `${(Date.now() - startTime) / 1000} seconds`
-      }
-    };
+  if (!divisions.length || !subjects.length || !teachers.length || !classes.length) {
+    throw new Error('Insufficient data: divisions, subjects, teachers, or classes array is empty');
   }
+
+  // Flatten divisions to include all department divisions (semester-wise)
+  const allDivisions = divisions;
+
+  // Generate schedule for all divisions together
+  const startTime = Date.now();
+  const schedule = this.run(allDivisions, subjects, teachers, classes);
+
+  if (!schedule) {
+    throw new Error('Failed to generate valid schedule');
+  }
+
+  // Calculate fitness globally for department
+  const fitnessScore = this.fitness(schedule, subjects);
+
+  return {
+    schedule, // department-wide schedule
+    metadata: {
+      fitnessScore,
+      generation_count: this.maxGenerations,
+      population_size: this.populationSize,
+      conflictsResolved: true,
+      algorithm_version: '3.3.0', // updated version
+      executionTime: `${((Date.now() - startTime) / 1000).toFixed(2)} seconds`,
+      divisions: allDivisions.map(d => d.division_name || d._id),
+    }
+  };
+}
+
 
   initializePopulation(divisions, subjects, teachers, classes) {
     const population = [];
@@ -3448,47 +3482,154 @@ export default class GeneticAlgorithm {
     return schedule;
   }
 
-  createRandomSchedule(divisions, subjects, teachers, classes) {
-  const schedule = {};
+//   createRandomSchedule(divisions, subjects, teachers, classes) {
+//   const schedule = {};
 
-  // Categorize subjects
+//   // Categorize subjects
+//   const theorySubjects = subjects.filter(s => s.type === 'theory');
+//   const practicalSubjects = subjects.filter(s => s.type === 'practical' || s.type === 'lab');
+//   const tutorialSubjects = subjects.filter(s => s.type === 'tutorial');
+
+//   // Categorize rooms
+//   const regularRooms = classes.filter(c => c.classNumber && !c.classNumber.toLowerCase().includes('lab'));
+//   const labRooms = classes.filter(c => c.classNumber && c.classNumber.toLowerCase().includes('lab'));
+//   const allRooms = [...regularRooms, ...labRooms];
+
+//   const pickRandom = arr => arr?.length ? arr[Math.floor(Math.random() * arr.length)] : null;
+
+//   // const getAvailableTeachers = (subject) => {
+//   //   if (!subject || !teachers.length) return [];
+//   //   let available = teachers.filter(t => t.semester && subject.sem_id && t.semester.toString() === subject.sem_id.toString());
+//   //   if (!available.length) available = [...teachers];
+//   //   return available;
+//   // };
+
+// const getAvailableTeachers = (subject) => {
+//   if (!subject || !teachers.length) return [];
+
+//   // Try teachers specifically assigned to this subject
+//   let available = teachers.filter(t => subject.teacherIds?.includes(t._id));
+
+//   // If none found, fallback to same semester
+//   if (!available.length) {
+//     available = teachers.filter(t => t.semester?.toString() === subject.sem_id?.toString());
+//   }
+
+//   // Final fallback: pick any teacher
+//   if (!available.length) available = [...teachers];
+
+//   return available;
+// };
+
+
+//   // Initialize schedule
+//   for (const division of divisions) {
+//     schedule[division] = {};
+//     for (const day of this.days) {
+//       schedule[division][day] = new Array(this.periodsPerDay).fill(null);
+//     }
+//   }
+
+//   const createWeeklyPlan = () => {
+//     const plan = [];
+
+//     theorySubjects.forEach(subject => {
+//       const sessions = Math.min(parseInt(subject.lecturePerWeek) || 3, 4);
+//       for (let i = 0; i < sessions; i++) plan.push({ subject, type: 'theory', preferredSlots: [0,1,2,3,4,5], priority: 2 });
+//     });
+
+//     practicalSubjects.forEach(subject => {
+//       for (let i = 0; i < 3; i++) plan.push({ subject, type: 'lab_session', preferredSlots: [0,2,4], priority: 1 });
+//     });
+
+//     tutorialSubjects.forEach(subject => {
+//       const sessions = Math.min(parseInt(subject.lecturePerWeek) || 2, 2);
+//       for (let i = 0; i < sessions; i++) plan.push({ subject, type: 'tutorial', preferredSlots: [4,5], priority: 3 });
+//     });
+
+//     return plan.sort((a,b) => a.priority - b.priority);
+//   };
+
+//   for (const division of divisions) {
+//     const weeklyPlan = createWeeklyPlan();
+//     const subjectWeeklyCount = new Map();
+
+//     for (const item of weeklyPlan) {
+//       const maxWeekly = item.type === 'tutorial' ? 2 : item.type === 'lab_session' ? 3 : parseInt(item.subject.lecturePerWeek) || 3;
+//       if ((subjectWeeklyCount.get(item.subject._id) || 0) >= maxWeekly) continue;
+
+//       // Shuffle days
+//       const shuffledDays = [...this.days].sort(() => Math.random() - 0.5);
+//       let scheduled = false;
+
+//       for (const day of shuffledDays) {
+//         if (scheduled) break;
+
+//         const daySchedule = schedule[division][day];
+
+//         // Daily limit: max 1, allow 2 only if no other days available
+//         const countToday = daySchedule.filter(slot => slot?.subject?._id === item.subject._id).length;
+//         const otherDaysAvailable = this.days.some(d => d !== day && !schedule[division][d].some(slot => slot?.subject?._id === item.subject._id));
+//         if (countToday >= 1 && otherDaysAvailable) continue;
+//         if (countToday >= 2) continue;
+
+//         if (item.type === 'lab_session') {
+//           for (const startSlot of item.preferredSlots) {
+//             if (startSlot + 1 < this.periodsPerDay && !daySchedule[startSlot] && !daySchedule[startSlot + 1]) {
+//               const teacher = pickRandom(getAvailableTeachers(item.subject));
+//               const room = pickRandom(labRooms.length ? labRooms : allRooms);
+//               if (teacher && room) {
+//                 const labSlot = { period: startSlot+1, subject: { _id:item.subject._id, subjectName:item.subject.subjectName, type:'practical' }, teacher:{_id:teacher._id, name:teacher.name}, classroom:{_id:room._id, room_number:room.classNumber} };
+//                 daySchedule[startSlot] = labSlot;
+//                 daySchedule[startSlot+1] = { ...labSlot, period: startSlot+2 };
+//                 scheduled = true;
+//                 break;
+//               }
+//             }
+//           }
+//         } else {
+//           for (const slot of item.preferredSlots) {
+//             if (!daySchedule[slot]) {
+//               const teacher = pickRandom(getAvailableTeachers(item.subject));
+//               const room = pickRandom(item.type === 'tutorial' ? regularRooms : allRooms);
+//               if (teacher && room) {
+//                 daySchedule[slot] = { period: slot+1, subject: { _id:item.subject._id, subjectName:item.subject.subjectName, type:item.subject.type }, teacher:{_id:teacher._id, name:teacher.name}, classroom:{_id:room._id, room_number:room.classNumber} };
+//                 scheduled = true;
+//                 break;
+//               }
+//             }
+//           }
+//         }
+//       }
+
+//       if (scheduled) subjectWeeklyCount.set(item.subject._id, (subjectWeeklyCount.get(item.subject._id) || 0)+1);
+//     }
+//   }
+
+//   return schedule;
+// }
+
+createRandomSchedule(divisions, subjects, teachers, classes) {
+  const schedule = {};
   const theorySubjects = subjects.filter(s => s.type === 'theory');
   const practicalSubjects = subjects.filter(s => s.type === 'practical' || s.type === 'lab');
   const tutorialSubjects = subjects.filter(s => s.type === 'tutorial');
 
-  // Categorize rooms
   const regularRooms = classes.filter(c => c.classNumber && !c.classNumber.toLowerCase().includes('lab'));
   const labRooms = classes.filter(c => c.classNumber && c.classNumber.toLowerCase().includes('lab'));
   const allRooms = [...regularRooms, ...labRooms];
 
   const pickRandom = arr => arr?.length ? arr[Math.floor(Math.random() * arr.length)] : null;
 
-  // const getAvailableTeachers = (subject) => {
-  //   if (!subject || !teachers.length) return [];
-  //   let available = teachers.filter(t => t.semester && subject.sem_id && t.semester.toString() === subject.sem_id.toString());
-  //   if (!available.length) available = [...teachers];
-  //   return available;
-  // };
+  const getAvailableTeachers = (subject) => {
+    if (!subject || !teachers.length) return [];
+    let available = teachers.filter(t => subject.teacherIds?.includes(t._id));
+    if (!available.length) available = teachers.filter(t => t.semester?.toString() === subject.sem_id?.toString());
+    if (!available.length) available = [...teachers];
+    return available;
+  };
 
-const getAvailableTeachers = (subject) => {
-  if (!subject || !teachers.length) return [];
-
-  // Try teachers specifically assigned to this subject
-  let available = teachers.filter(t => subject.teacherIds?.includes(t._id));
-
-  // If none found, fallback to same semester
-  if (!available.length) {
-    available = teachers.filter(t => t.semester?.toString() === subject.sem_id?.toString());
-  }
-
-  // Final fallback: pick any teacher
-  if (!available.length) available = [...teachers];
-
-  return available;
-};
-
-
-  // Initialize schedule
+  // Initialize schedule for **all divisions**
   for (const division of divisions) {
     schedule[division] = {};
     for (const day of this.days) {
@@ -3496,56 +3637,63 @@ const getAvailableTeachers = (subject) => {
     }
   }
 
-  const createWeeklyPlan = () => {
-    const plan = [];
+  // Create weekly plan **per division**
+  for (const division of divisions) {
+    const weeklyPlan = [];
 
     theorySubjects.forEach(subject => {
-      const sessions = Math.min(parseInt(subject.lecturePerWeek) || 3, 4);
-      for (let i = 0; i < sessions; i++) plan.push({ subject, type: 'theory', preferredSlots: [0,1,2,3,4,5], priority: 2 });
+      if (subject.sem_id.toString() === division.semester.toString()) {
+        const sessions = Math.min(parseInt(subject.lecturePerWeek) || 3, 4);
+        for (let i = 0; i < sessions; i++) weeklyPlan.push({ subject, type: 'theory', priority: 2 });
+      }
     });
 
     practicalSubjects.forEach(subject => {
-      for (let i = 0; i < 3; i++) plan.push({ subject, type: 'lab_session', preferredSlots: [0,2,4], priority: 1 });
+      if (subject.sem_id.toString() === division.semester.toString()) {
+        for (let i = 0; i < 3; i++) weeklyPlan.push({ subject, type: 'lab_session', priority: 1 });
+      }
     });
 
     tutorialSubjects.forEach(subject => {
-      const sessions = Math.min(parseInt(subject.lecturePerWeek) || 2, 2);
-      for (let i = 0; i < sessions; i++) plan.push({ subject, type: 'tutorial', preferredSlots: [4,5], priority: 3 });
+      if (subject.sem_id.toString() === division.semester.toString()) {
+        const sessions = Math.min(parseInt(subject.lecturePerWeek) || 2, 2);
+        for (let i = 0; i < sessions; i++) weeklyPlan.push({ subject, type: 'tutorial', priority: 3 });
+      }
     });
 
-    return plan.sort((a,b) => a.priority - b.priority);
-  };
+    weeklyPlan.sort((a,b) => a.priority - b.priority);
 
-  for (const division of divisions) {
-    const weeklyPlan = createWeeklyPlan();
+    // Fill the schedule
     const subjectWeeklyCount = new Map();
 
     for (const item of weeklyPlan) {
       const maxWeekly = item.type === 'tutorial' ? 2 : item.type === 'lab_session' ? 3 : parseInt(item.subject.lecturePerWeek) || 3;
       if ((subjectWeeklyCount.get(item.subject._id) || 0) >= maxWeekly) continue;
 
-      // Shuffle days
       const shuffledDays = [...this.days].sort(() => Math.random() - 0.5);
       let scheduled = false;
 
       for (const day of shuffledDays) {
         if (scheduled) break;
-
         const daySchedule = schedule[division][day];
 
-        // Daily limit: max 1, allow 2 only if no other days available
         const countToday = daySchedule.filter(slot => slot?.subject?._id === item.subject._id).length;
         const otherDaysAvailable = this.days.some(d => d !== day && !schedule[division][d].some(slot => slot?.subject?._id === item.subject._id));
         if (countToday >= 1 && otherDaysAvailable) continue;
         if (countToday >= 2) continue;
 
         if (item.type === 'lab_session') {
-          for (const startSlot of item.preferredSlots) {
-            if (startSlot + 1 < this.periodsPerDay && !daySchedule[startSlot] && !daySchedule[startSlot + 1]) {
+          for (let startSlot = 0; startSlot < this.periodsPerDay - 1; startSlot++) {
+            if (!daySchedule[startSlot] && !daySchedule[startSlot + 1]) {
               const teacher = pickRandom(getAvailableTeachers(item.subject));
               const room = pickRandom(labRooms.length ? labRooms : allRooms);
               if (teacher && room) {
-                const labSlot = { period: startSlot+1, subject: { _id:item.subject._id, subjectName:item.subject.subjectName, type:'practical' }, teacher:{_id:teacher._id, name:teacher.name}, classroom:{_id:room._id, room_number:room.classNumber} };
+                const labSlot = {
+                  period: startSlot+1,
+                  subject: { _id:item.subject._id, subjectName:item.subject.subjectName, type:'practical' },
+                  teacher:{_id:teacher._id, name:teacher.name},
+                  classroom:{_id:room._id, room_number:room.classNumber}
+                };
                 daySchedule[startSlot] = labSlot;
                 daySchedule[startSlot+1] = { ...labSlot, period: startSlot+2 };
                 scheduled = true;
@@ -3554,12 +3702,17 @@ const getAvailableTeachers = (subject) => {
             }
           }
         } else {
-          for (const slot of item.preferredSlots) {
+          for (let slot = 0; slot < this.periodsPerDay; slot++) {
             if (!daySchedule[slot]) {
               const teacher = pickRandom(getAvailableTeachers(item.subject));
               const room = pickRandom(item.type === 'tutorial' ? regularRooms : allRooms);
               if (teacher && room) {
-                daySchedule[slot] = { period: slot+1, subject: { _id:item.subject._id, subjectName:item.subject.subjectName, type:item.subject.type }, teacher:{_id:teacher._id, name:teacher.name}, classroom:{_id:room._id, room_number:room.classNumber} };
+                daySchedule[slot] = {
+                  period: slot+1,
+                  subject: { _id:item.subject._id, subjectName:item.subject.subjectName, type:item.subject.type },
+                  teacher:{_id:teacher._id, name:teacher.name},
+                  classroom:{_id:room._id, room_number:room.classNumber}
+                };
                 scheduled = true;
                 break;
               }

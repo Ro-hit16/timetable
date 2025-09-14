@@ -1183,8 +1183,8 @@
 // };
 
 // export default Timetables;
-
-
+ 
+ 
 
 
 
@@ -1236,7 +1236,7 @@ const Timetables = () => {
   const [teachers, setTeachers] = useState([]);
   const [classes, setClasses] = useState([]);
   const [allDivisions, setAllDivisions] = useState([]);
-
+ 
 
   const academicYears = ["2024-25", "2025-26", "2026-27"];
 
@@ -1249,7 +1249,7 @@ const Timetables = () => {
 
   const [generateForm, setGenerateForm] = useState({
     departmentId: '',
-    semester: '',
+    semester: '' || [],
     academicYear: '',
     divisions: ['SYA', 'SYB', 'TYA', 'TYB', 'BTechA', 'BTechB']
   });
@@ -1465,7 +1465,7 @@ const Timetables = () => {
 
 
 
-  // const normalizeSubjects = (subjects) => {
+   // const normalizeSubjects = (subjects) => {
   //   if (!subjects) return [];
 
   //   let rawSubjects = [];
@@ -2292,7 +2292,7 @@ const handleExport = async (divisionName, format) => {
 
         </div>
       )}
-    </div>
+    </div> 
   );
 };
 

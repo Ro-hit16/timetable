@@ -1705,208 +1705,208 @@
 //       "Period 6": { subject: "Seminar", teacher: "Prof. Perez", time: "4:30 - 5:30" },
 //     },
 //   },
-// };
-import axios from "axios";
-const timetableService = {
-  // generateTimetable: async (data) => {
-  //   try {
-  //     console.log('📤 Sending generation request:', data);
+// // };
+// import axios from "axios";
+// const timetableService = {
+//   // generateTimetable: async (data) => {
+//   //   try {
+//   //     console.log('📤 Sending generation request:', data);
       
-  //     const response = await fetch('/api/timetables/generate', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({
-  //         departmentId: data.departmentId,
-  //         semester: data.semester,
-  //         academicYear: data.academicYear,
-  //         divisions: data.divisions,
-  //         subjects: Array.isArray(data.subjects) ? data.subjects : [],
-  //         teachers: Array.isArray(data.teachers) ? data.teachers : [],
-  //         classes: Array.isArray(data.classes) ? data.classes : []
-  //       })
-  //     });
+//   //     const response = await fetch('/api/timetables/generate', {
+//   //       method: 'POST',
+//   //       headers: {
+//   //         'Content-Type': 'application/json',
+//   //       },
+//   //       body: JSON.stringify({
+//   //         departmentId: data.departmentId,
+//   //         semester: data.semester,
+//   //         academicYear: data.academicYear,
+//   //         divisions: data.divisions,
+//   //         subjects: Array.isArray(data.subjects) ? data.subjects : [],
+//   //         teachers: Array.isArray(data.teachers) ? data.teachers : [],
+//   //         classes: Array.isArray(data.classes) ? data.classes : []
+//   //       })
+//   //     });
 
-  //     if (!response.ok) {
-  //       const errorData = await response.json();
-  //       throw new Error(errorData.message || 'Failed to generate timetable');
-  //     }
+//   //     if (!response.ok) {
+//   //       const errorData = await response.json();
+//   //       throw new Error(errorData.message || 'Failed to generate timetable');
+//   //     }
 
-  //     const result = await response.json();
-  //     console.log('📥 Generation response:', result);
-  //     return result;
+//   //     const result = await response.json();
+//   //     console.log('📥 Generation response:', result);
+//   //     return result;
 
-  //   } catch (error) {
-  //     console.error('❌ Generation error:', error);
-  //     throw error;
-  //   }
-  // },
+//   //   } catch (error) {
+//   //     console.error('❌ Generation error:', error);
+//   //     throw error;
+//   //   }
+//   // },
   
 
-  // generateTimetable: async (data) => {
-  //   try {
-  //     // Input validation
-  //     if (!data.departmentId || !data.semester || !data.academicYear || !data.divisions?.length) {
-  //       throw new Error('Missing required fields');
-  //     }
+//   // generateTimetable: async (data) => {
+//   //   try {
+//   //     // Input validation
+//   //     if (!data.departmentId || !data.semester || !data.academicYear || !data.divisions?.length) {
+//   //       throw new Error('Missing required fields');
+//   //     }
 
-  //     if (!data.subjects?.length || !data.teachers?.length || !data.classes?.length) {
-  //       throw new Error('Missing required data (subjects, teachers, or classes)');
-  //     }
+//   //     if (!data.subjects?.length || !data.teachers?.length || !data.classes?.length) {
+//   //       throw new Error('Missing required data (subjects, teachers, or classes)');
+//   //     }
 
-  //     // Format data for API
-  //     const formattedData = {
-  //       departmentId: data.departmentId,
-  //       semester: parseInt(data.semester),
-  //       academicYear: data.academicYear,
-  //       divisions: data.divisions,
-  //       subjects: data.subjects.map(s => ({
-  //         _id: s._id,
-  //         name: s.name,
-  //         type: s.type || 'Theory',
-  //         semester: parseInt(s.semester),
-  //         credits: s.credits || 0,
-  //         lectures_per_week: s.lectures_per_week || 0
-  //       })),
-  //       teachers: data.teachers.map(t => ({
-  //         _id: t._id,
-  //         name: t.name,
-  //         subjects: t.subjects || [],
-  //         semester: parseInt(t.semester)
-  //       })),
-  //       classes: data.classes.map(c => ({
-  //         _id: c._id,
-  //         name: c.name || c.classNumber,
-  //         capacity: c.capacity || 0,
-  //         type: c.type || 'Theory'
-  //       }))
-  //     };
+//   //     // Format data for API
+//   //     const formattedData = {
+//   //       departmentId: data.departmentId,
+//   //       semester: parseInt(data.semester),
+//   //       academicYear: data.academicYear,
+//   //       divisions: data.divisions,
+//   //       subjects: data.subjects.map(s => ({
+//   //         _id: s._id,
+//   //         name: s.name,
+//   //         type: s.type || 'Theory',
+//   //         semester: parseInt(s.semester),
+//   //         credits: s.credits || 0,
+//   //         lectures_per_week: s.lectures_per_week || 0
+//   //       })),
+//   //       teachers: data.teachers.map(t => ({
+//   //         _id: t._id,
+//   //         name: t.name,
+//   //         subjects: t.subjects || [],
+//   //         semester: parseInt(t.semester)
+//   //       })),
+//   //       classes: data.classes.map(c => ({
+//   //         _id: c._id,
+//   //         name: c.name || c.classNumber,
+//   //         capacity: c.capacity || 0,
+//   //         type: c.type || 'Theory'
+//   //       }))
+//   //     };
 
-  //     // Log request data
-  //     console.log('📤 Sending generation request:', {
-  //       departmentId: formattedData.departmentId,
-  //       semester: formattedData.semester,
-  //       divisions: formattedData.divisions,
-  //       subjectsCount: formattedData.subjects.length,
-  //       teachersCount: formattedData.teachers.length,
-  //       classesCount: formattedData.classes.length
-  //     });
+//   //     // Log request data
+//   //     console.log('📤 Sending generation request:', {
+//   //       departmentId: formattedData.departmentId,
+//   //       semester: formattedData.semester,
+//   //       divisions: formattedData.divisions,
+//   //       subjectsCount: formattedData.subjects.length,
+//   //       teachersCount: formattedData.teachers.length,
+//   //       classesCount: formattedData.classes.length
+//   //     });
 
-  //     // Make API request
-  //     const response = await fetch('/api/timetables/generate', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify(formattedData)
-  //     });
+//   //     // Make API request
+//   //     const response = await fetch('/api/timetables/generate', {
+//   //       method: 'POST',
+//   //       headers: {
+//   //         'Content-Type': 'application/json',
+//   //       },
+//   //       body: JSON.stringify(formattedData)
+//   //     });
 
-  //     console.log('📥 Response status:', response.status);
+//   //     console.log('📥 Response status:', response.status);
 
-  //     if (!response.ok) {
-  //       const errorData = await response.json();
-  //       console.error('❌ Server error:', errorData);
+//   //     if (!response.ok) {
+//   //       const errorData = await response.json();
+//   //       console.error('❌ Server error:', errorData);
         
-  //       // Return structured error response
-  //       return {
-  //         success: false,
-  //         error: errorData.message || `Server error: ${response.status}`,
-  //         details: errorData.errors || []
-  //       };
-  //     }
+//   //       // Return structured error response
+//   //       return {
+//   //         success: false,
+//   //         error: errorData.message || `Server error: ${response.status}`,
+//   //         details: errorData.errors || []
+//   //       };
+//   //     }
 
-  //     const result = await response.json();
-  //     console.log('✅ Generation successful:', result);
+//   //     const result = await response.json();
+//   //     console.log('✅ Generation successful:', result);
 
-  //     // Return success response
-  //     return {
-  //       success: true,
-  //       data: result.data,
-  //       message: 'Timetable generated successfully'
-  //     };
+//   //     // Return success response
+//   //     return {
+//   //       success: true,
+//   //       data: result.data,
+//   //       message: 'Timetable generated successfully'
+//   //     };
 
-  //   } catch (error) {
-  //     console.error('❌ Generation failed:', {
-  //       message: error.message,
-  //       error: error
-  //     });
+//   //   } catch (error) {
+//   //     console.error('❌ Generation failed:', {
+//   //       message: error.message,
+//   //       error: error
+//   //     });
       
-  //     // Return error response
-  //     return {
-  //       success: false,
-  //       error: error.message || 'Failed to generate timetable',
-  //       details: []
-  //     };
-  //   }
-  // },
+//   //     // Return error response
+//   //     return {
+//   //       success: false,
+//   //       error: error.message || 'Failed to generate timetable',
+//   //       details: []
+//   //     };
+//   //   }
+//   // },
 
 
 
  
-generateTimetable: async (inputData) => {
-  try {
-    console.log("📝 Raw input data:", inputData);
+// generateTimetable: async (inputData) => {
+//   try {
+//     console.log("📝 Raw input data:", inputData);
 
-    const { departmentId, semester, academicYear, divisions, subjects, teachers, classes } = inputData;
+//     const { departmentId, semester, academicYear, divisions, subjects, teachers, classes } = inputData;
 
-    // ✅ Filter subjects by semester
-    const filteredSubjects = subjects.filter(
-      (subject) => String(subject.semester) === String(semester)
-    );
+//     // ✅ Filter subjects by semester
+//     const filteredSubjects = subjects.filter(
+//       (subject) => String(subject.semester) === String(semester)
+//     );
 
-    console.log("🎯 Filtered subjects:", {
-      semester,
-      total: subjects.length,
-      filtered: filteredSubjects.length,
-      subjects: filteredSubjects,
-    });
+//     console.log("🎯 Filtered subjects:", {
+//       semester,
+//       total: subjects.length,
+//       filtered: filteredSubjects.length,
+//       subjects: filteredSubjects,
+//     });
 
-    // ✅ Filter teachers by semester
-    const filteredTeachers = teachers.filter(
-      (teacher) => String(teacher.semester) === String(semester)
-    );
+//     // ✅ Filter teachers by semester
+//     const filteredTeachers = teachers.filter(
+//       (teacher) => String(teacher.semester) === String(semester)
+//     );
 
-    console.log("👨‍🏫 Filtered teachers:", {
-      semester,
-      total: teachers.length,
-      filtered: filteredTeachers.length,
-      teachers: filteredTeachers,
-    });
+//     console.log("👨‍🏫 Filtered teachers:", {
+//       semester,
+//       total: teachers.length,
+//       filtered: filteredTeachers.length,
+//       teachers: filteredTeachers,
+//     });
 
-    // ✅ Filter classes by semester
-    const filteredClasses = classes.filter(
-      (cls) => String(cls.semester) === String(semester)
-    );
+//     // ✅ Filter classes by semester
+//     const filteredClasses = classes.filter(
+//       (cls) => String(cls.semester) === String(semester)
+//     );
 
-    console.log("🏫 Filtered classes:", {
-      semester,
-      total: classes.length,
-      filtered: filteredClasses.length,
-      classes: filteredClasses,
-    });
+//     console.log("🏫 Filtered classes:", {
+//       semester,
+//       total: classes.length,
+//       filtered: filteredClasses.length,
+//       classes: filteredClasses,
+//     });
 
-    // ✅ Final payload to send
-    const payload = {
-      departmentId,
-      semester,
-      academicYear,
-      divisions,
-      subjects: filteredSubjects,
-      teachers: filteredTeachers,
-      classes: filteredClasses,
-    };
+//     // ✅ Final payload to send
+//     const payload = {
+//       departmentId,
+//       semester,
+//       academicYear,
+//       divisions,
+//       subjects: filteredSubjects,
+//       teachers: filteredTeachers,
+//       classes: filteredClasses,
+//     };
 
-    console.log("🧪 Final payload to generate:", payload);
+//     console.log("🧪 Final payload to generate:", payload);
 
-    const response = await axios.post(`/api/timetables/generate`, payload);
-    console.log("✅ API response from backend:", response.data); 
-    return response.data;
-  } catch (error) {
-    console.error("❌ Generation failed:", error?.response?.data?.message || error.message);
-    throw error;
-  }
-},
+//     const response = await axios.post(`/api/timetables/generate`, payload);
+//     console.log("✅ API response from backend:", response.data); 
+//     return response.data;
+//   } catch (error) {
+//     console.error("❌ Generation failed:", error?.response?.data?.message || error.message);
+//     throw error;
+//   }
+// },
 
 
 
@@ -1918,6 +1918,179 @@ generateTimetable: async (inputData) => {
 
 
 
+
+//   getTimetables: async (departmentId, filters = {}) => {
+//     try {
+//       const params = new URLSearchParams(filters);
+//       const response = await fetch(`/api/timetables/department/${departmentId}?${params}`);
+//       return await response.json();
+//     } catch (error) {
+//       console.error('❌ Fetch error:', error);
+//       throw error;
+//     }
+//   },
+
+//   getTimetable: async (id, includeStats = false) => {
+//     try {
+//       const response = await fetch(`/api/timetables/${id}?stats=${includeStats}`);
+//       //  const data = await response.json();
+//       //  console.log("📥 Fetched timetable data:", data);
+//       return await response.json();
+//     } catch (error) {
+//       console.error('❌ Fetch error:', error);
+//       throw error;
+//     }
+//   },
+
+//   getStatistics: async (id) => {
+//     try {
+//       const response = await fetch(`/api/timetables/${id}/statistics`);
+//       return await response.json();
+//     } catch (error) {
+//       console.error('❌ Fetch error:', error);
+//       throw error;
+//     }
+//   },
+
+//   updateStatus: async (id, status) => {
+//     try {
+//       const response = await fetch(`/api/timetables/${id}/status`, {
+//         method: 'PATCH',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ status })
+//       });
+//       return await response.json();
+//     } catch (error) {
+//       console.error('❌ Update error:', error);
+//       throw error;
+//     }
+//   },
+
+//   deleteTimetable: async (id) => {
+//     try {
+//       const response = await fetch(`/api/timetables/${id}`, {
+//         method: 'DELETE'
+//       });
+//       return await response.json();
+//     } catch (error) {
+//       console.error('❌ Delete error:', error);
+//       throw error;
+//     }
+//   },
+
+//   exportTimetable: async (id, format) => {
+//     try {
+//       return await fetch(`/api/timetables/${id}/export?format=${format}`);
+//     } catch (error) {
+//       console.error('❌ Export error:', error);
+//       throw error;
+//     }
+//   },
+
+//   cloneTimetable: async (id, { newAcademicYear, newSemester }) => {
+//     try {
+//       const response = await fetch(`/api/timetables/${id}/clone`, {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ newAcademicYear, newSemester })
+//       });
+//       return await response.json();
+//     } catch (error) {
+//       console.error('❌ Clone error:', error);
+//       throw error;
+//     }
+//   }
+// };
+
+// export default timetableService;
+
+
+import axios from "axios";
+
+const timetableService = {
+  generateTimetable: async (inputData) => {
+    try {
+      console.log("📝 Raw input data:", inputData);
+
+      const { departmentId, semester, academicYear, divisions, subjects, teachers, classes } = inputData;
+
+      // ✅ Filter subjects by semester
+      const filteredSubjects = subjects.filter(
+        (subject) => String(subject.semester) === String(semester)
+      );
+
+      console.log("🎯 Filtered subjects:", {
+        semester,
+        total: subjects.length,
+        filtered: filteredSubjects.length,
+        subjects: filteredSubjects,
+      });
+
+      // ✅ Filter teachers by semester
+      const filteredTeachers = teachers.filter(
+        (teacher) => String(teacher.semester) === String(semester)
+      );
+
+      console.log("👨‍🏫 Filtered teachers:", {
+        semester,
+        total: teachers.length,
+        filtered: filteredTeachers.length,
+        teachers: filteredTeachers,
+      });
+
+      // ✅ Filter classes by semester
+      const filteredClasses = classes.filter(
+        (cls) => String(cls.semester) === String(semester)
+      );
+
+      console.log("🏫 Filtered classes:", {
+        semester,
+        total: classes.length,
+        filtered: filteredClasses.length,
+        classes: filteredClasses,
+      });
+
+      // ✅ Final payload
+      const payload = {
+        departmentId,
+        semester,
+        academicYear,
+        divisions,
+        subjects: filteredSubjects,
+        teachers: filteredTeachers,
+        classes: filteredClasses,
+      };
+
+      console.log("🧪 Final payload to generate:", payload);
+
+      const response = await axios.post(`/api/timetables/generate`, payload);
+      console.log("✅ API response from backend:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Generation failed:", error?.response?.data?.message || error.message);
+      throw error;
+    }
+  },
+
+  // ✅ New function for Active Timetables
+  getActiveTimetables: async () => {
+    try {
+      console.log("📡 Fetching active timetables...");
+      const response = await axios.get(`/api/timetables/active`);
+      console.log("✅ Active timetables response:", response.data);
+      return {
+        success: true,
+        data: response.data.data || []
+      };
+    } catch (error) {
+      console.error("❌ Error fetching active timetables:", error?.response?.data?.message || error.message);
+      return {
+        success: false,
+        data: [],
+        error: error?.response?.data?.message || "Failed to fetch active timetables"
+      };
+    }
+  },
 
   getTimetables: async (departmentId, filters = {}) => {
     try {
@@ -1925,7 +2098,7 @@ generateTimetable: async (inputData) => {
       const response = await fetch(`/api/timetables/department/${departmentId}?${params}`);
       return await response.json();
     } catch (error) {
-      console.error('❌ Fetch error:', error);
+      console.error("❌ Fetch error:", error);
       throw error;
     }
   },
@@ -1933,11 +2106,9 @@ generateTimetable: async (inputData) => {
   getTimetable: async (id, includeStats = false) => {
     try {
       const response = await fetch(`/api/timetables/${id}?stats=${includeStats}`);
-      //  const data = await response.json();
-      //  console.log("📥 Fetched timetable data:", data);
       return await response.json();
     } catch (error) {
-      console.error('❌ Fetch error:', error);
+      console.error("❌ Fetch error:", error);
       throw error;
     }
   },
@@ -1947,7 +2118,7 @@ generateTimetable: async (inputData) => {
       const response = await fetch(`/api/timetables/${id}/statistics`);
       return await response.json();
     } catch (error) {
-      console.error('❌ Fetch error:', error);
+      console.error("❌ Fetch error:", error);
       throw error;
     }
   },
@@ -1955,13 +2126,13 @@ generateTimetable: async (inputData) => {
   updateStatus: async (id, status) => {
     try {
       const response = await fetch(`/api/timetables/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
       });
       return await response.json();
     } catch (error) {
-      console.error('❌ Update error:', error);
+      console.error("❌ Update error:", error);
       throw error;
     }
   },
@@ -1969,11 +2140,11 @@ generateTimetable: async (inputData) => {
   deleteTimetable: async (id) => {
     try {
       const response = await fetch(`/api/timetables/${id}`, {
-        method: 'DELETE'
+        method: "DELETE",
       });
       return await response.json();
     } catch (error) {
-      console.error('❌ Delete error:', error);
+      console.error("❌ Delete error:", error);
       throw error;
     }
   },
@@ -1982,7 +2153,7 @@ generateTimetable: async (inputData) => {
     try {
       return await fetch(`/api/timetables/${id}/export?format=${format}`);
     } catch (error) {
-      console.error('❌ Export error:', error);
+      console.error("❌ Export error:", error);
       throw error;
     }
   },
@@ -1990,16 +2161,16 @@ generateTimetable: async (inputData) => {
   cloneTimetable: async (id, { newAcademicYear, newSemester }) => {
     try {
       const response = await fetch(`/api/timetables/${id}/clone`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newAcademicYear, newSemester })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newAcademicYear, newSemester }),
       });
       return await response.json();
     } catch (error) {
-      console.error('❌ Clone error:', error);
+      console.error("❌ Clone error:", error);
       throw error;
     }
-  }
+  },
 };
 
 export default timetableService;

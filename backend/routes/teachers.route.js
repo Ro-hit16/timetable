@@ -102,7 +102,10 @@ import {
   getTeacherById, 
   createTeacher, 
   updateTeacher, 
-  deleteTeacher 
+  deleteTeacher ,
+  uploadTeachersFromPdf,
+  uploadMiddleware
+
 } from '../controllers/teachers.controller.js';
 
 const router = express.Router();
@@ -121,6 +124,9 @@ router.put('/:id', updateTeacher);
 
 // DELETE /api/teachers/:id - Delete teacher
 router.delete('/:id', deleteTeacher);
+
+router.post('/upload-pdf', uploadMiddleware, uploadTeachersFromPdf);
+
 
 export default router;
 
