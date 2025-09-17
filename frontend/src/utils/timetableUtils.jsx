@@ -1650,12 +1650,12 @@ export const fetchSubjects = async (setSubjects, setLoading) => {
     
     const response = await fetch('/api/subjects');
     const data = await response.json();
-    console.log('📚 Raw subjects data:', data.data); // Debug logging
+    //console.log('📚 Raw subjects data:', data.data); // Debug logging
 
     if (data.success) {
       // Extract subjects array from nested structure
       const subjectsList = data.data.subjects || data.data || [];
-      console.log('✅ Formatted subjects list:', subjectsList); // Debug logging
+      //console.log('✅ Formatted subjects list:', subjectsList); // Debug logging
 
       // Filter and format subjects if needed
       const formattedSubjects = subjectsList.map(subject => ({
@@ -2629,7 +2629,7 @@ export const formatTimetableData = (timetables, setFormattedTimetable) => {
   //console.log("📥 Raw timetables input:", timetables);
 
   if (!Array.isArray(timetables) || timetables.length === 0) {
-    console.log("❌ No timetables to format.");
+    //console.log("❌ No timetables to format.");
     setFormattedTimetable(null);
     return;
   }
