@@ -1,5 +1,7 @@
 
 
+
+
 // import React, { useState, useEffect } from 'react';
 // import {
 //   Calendar,
@@ -19,8 +21,10 @@
 //   Filter,
 //   Search
 // } from 'lucide-react';
+// import jsPDF from 'jspdf';
+// import html2canvas from 'html2canvas';
 // import { toast } from 'react-toastify';
-// import timetableService, { mockTimetableData } from '../../services/timetableService';
+// import timetableService from '../../services/timetableService';
 // import {
 //   divisions,
 //   days,
@@ -28,12 +32,12 @@
 //   fetchDepartments,
 //   fetchSubjects,
 //   fetchTeachers,
-
 //   renderTimetableGrid,
 //   formatTimetableData,
 //   processScheduleData
 // } from '../../utils/timetableUtils';
 // import { fetchClasses } from '../../utils/timetableUtils';
+
 // const Timetables = () => {
 //   const [timetables, setTimetables] = useState([]);
 //   const [selectedTimetable, setSelectedTimetable] = useState(null);
@@ -45,11 +49,10 @@
 //   const [subjects, setSubjects] = useState([]);
 //   const [teachers, setTeachers] = useState([]);
 //   const [classes, setClasses] = useState([]);
-//   const [timetableData, setTimetableData] = useState([]);
-
+//   const [allDivisions, setAllDivisions] = useState([]);
+ 
 
 //   const academicYears = ["2024-25", "2025-26", "2026-27"];
-
 
 //   const [filters, setFilters] = useState({
 //     department: '',
@@ -57,9 +60,10 @@
 //     academicYear: '',
 //     status: ''
 //   });
+
 //   const [generateForm, setGenerateForm] = useState({
 //     departmentId: '',
-//     semester: '',
+//     semester: '' || [],
 //     academicYear: '',
 //     divisions: ['SYA', 'SYB', 'TYA', 'TYB', 'BTechA', 'BTechB']
 //   });
@@ -73,8 +77,8 @@
 //           fetchSubjects(setSubjects),
 //           fetchTeachers(setTeachers),
 //           fetchClasses(setClasses)
-//         ]);
 
+//         ]);
 //       } catch (error) {
 //         toast.error('Failed to load initial data');
 //         console.error('Initialization error:', error);
@@ -83,40 +87,81 @@
 //       }
 //     };
 
+
 //     loadInitialData();
 //   }, []);
 
+
+
 //   useEffect(() => {
 //     const loadInitialData = async () => {
-//       const res = await fetch('/api/classes');
+//       const res = await fetch('/api/classes');       
 //       const data = await res.json();
 //       setClasses(data); // directly set
 //       console.log("✅ SETTING CLASSES TO:", data);
 //     };
 //     loadInitialData();
 //   }, []);
-//   ;
+
+ 
+//   useEffect(() => {
+//     const loadInitialData = async () => {
+//       try {
+//         const [classesRes, subjectsRes, classroomsRes] = await Promise.all([
+//           fetch('/api/classes'),
+//           fetch('/api/subjects'),
+
+//         ]);
+
+//         const [classes, subjects] = await Promise.all([
+//           classesRes.json(),
+//           subjectsRes.json(),
+
+//         ]);
+
+//         setClasses(classes);
+//         setSubjects(subjects.data.subjects);
+
+
+//         console.log("✅ Classes:", classes);
+//         console.log("📚 Subjects:", subjects.data.subjects);
+
+//       } catch (err) {
+//         console.error("❌ Failed to load initial data:", err);
+//       }
+//     };
+
+//     loadInitialData();
+//   }, []);
 
 
 //   const loadTimetables = async () => {
-//     console.log("🔍 Filters being used to fetch timetables:", filters);
+    
 
 //     setLoading(true);
 //     try {
+//       const departmentId = filters.department;
+     
 
-
-//       const departmentId = filters.department; // Ensure this is a valid ID
-//       console.log("✅ departmentId being used:", departmentId);
 //       if (!departmentId) {
-//         console.log('No department selected, skipping timetable fetch');
+        
 //         setTimetables([]);
 //         setFormattedTimetable(null);
-//         return; // Prevent the API call if department ID is not set
+//         return;
 //       }
 
 //       const result = await timetableService.getTimetables(departmentId, filters);
-//       console.log("📦 API Response from backend:", result);
+//       console.log("📦 API Response from backend:", result.data[0]);
+//       //console.log("📦 API Response from backend:", result);
 //       console.log("📅 Timetables to be shown on UI:", result.data);
+//       const sample = result.data[0];
+//       console.log("🧪 Full timetable object sample:", JSON.stringify(sample, null, 2));
+
+//       console.log("📌 division:", sample.divisions);
+//       //console.log(`📌 Division ${idx + 1}: ${division.division_name}`);
+//       console.log("📅 Schedule of first division:", sample.divisions[0].schedule);
+
+
 
 //       setTimetables(result.data || []);
 //       formatTimetableData(result.data || [], setFormattedTimetable);
@@ -127,355 +172,195 @@
 //       setLoading(false);
 //     }
 //   };
-
-
-//   // const handleGenerate = async () => {
-//   //   if (!generateForm.departmentId || !generateForm.semester) {
-//   //     toast.error('Please select department and semester');
-//   //     return;
-//   //   }
-
-//   //   setLoading(true);
-//   //   try {
-//   //     const result = await timetableService.generateTimetable({
-//   //       ...generateForm,
-//   //       subjects,
-//   //       teachers,
-//   //       classes
-//   //     });
-
-//   //     if (result.success || result.id) { // Handle both success formats
-//   //       toast.success('Timetable generated successfully!');
-//   //       await loadTimetables();
-//   //       setActiveTab('list');
-//   //       setGenerateForm({ // Reset form
-//   //         ...generateForm,
-//   //         departmentId: '',
-//   //         semester: ''
-//   //       });
-//   //     } else {
-//   //       toast.error('Failed to generate timetable: ' + 
-//   //         (result.message || 'Unknown error'));
-//   //     }
-//   //   } catch (error) {
-//   //     toast.error('Error generating timetable');
-//   //     console.error('Generation error:', error);
-//   //   } finally {
-//   //     setLoading(false);
-//   //   }
-//   // };
-
-//   // const handleGenerate = async () => {
-//   //   console.log('Generate function triggered');
-//   //   if (!generateForm.departmentId || !generateForm.semester ||
-//   //     !generateForm.academicYear) {
-//   //     toast.error('Please select department and semester');
-//   //     return;
-//   //   }
-//   //   console.log('Generate Form:', generateForm);
-//   //   setLoading(true);
-//   //   try {
-//   //     const result = await timetableService.generateTimetable({
-//   //       ...generateForm,
-//   //       subjects,
-//   //       teachers,
-//   //       classes
-//   //     });
-//   //     console.log('Generate API Response:', result);
-//   //     if (result.success || result.id) { // Handle both success formats
-//   //       toast.success('Timetable generated successfully!');
-//   //       await loadTimetables();
-//   //       setActiveTab('list');
-//   //       setGenerateForm({ // Reset form
-//   //         ...generateForm,
-//   //         departmentId: '',
-//   //         semester: ''
-//   //       });
-//   //     } else {
-//   //       toast.error('Failed to generate timetable: ' +
-//   //         (result.message || 'Unknown error'));
-//   //     }
-//   //   } catch (error) {
-//   //     toast.error('Error generating timetable');
-//   //     console.error('Error generating timetable:', error);
-
-//   //   }
-//   // }
-
-//   // const handleGenerate = async () => {
-
-
-//   //   if (!generateForm.departmentId || !generateForm.semester || !generateForm.academicYear) {
-//   //     toast.error('Please select Department, Semester, and Academic Year');
-//   //     return;
-//   //   }
-
-
-//   //   setLoading(true);
-
-//   //   try {
-//   //     const result = await timetableService.generateTimetable({
-//   //       ...generateForm,
-//   //       subjects,
-//   //       teachers,
-//   //       classes,
-//   //     });
+//   useEffect(() => {
+//     fetchSubjects(setSubjects);
+//   }, [setSubjects]);
 
 
 
-//   //     if (result.success || result.id) {
-//   //       toast.success('Timetable generated successfully!');
-//   //       await loadTimetables();
-//   //       setActiveTab('list');
-
-//   //       // ✅ Reset full form
-//   //       setGenerateForm({
-//   //         departmentId: '',
-//   //         semester: '',
-//   //         academicYear: '',
-//   //         divisions: [],
-//   //       });
-//   //     } else {
-//   //       toast.error('Failed to generate timetable: ' + (result.message || 'Unknown error'));
-//   //     }
-//   //   } catch (error) {
-//   //     toast.error('Error generating timetable');
-
-//   //   } finally {
-//   //     setLoading(false);
-//   //   }
-//   // };
-
-//   //  const autoGenerateLectures = () => {
-//   //   const generatedLectures = [];
-
-//   //   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-//   //   const periodsPerDay = 6;
-
-//   //   generateForm.divisions.forEach((division) => {
-//   //     days.forEach((day) => {
-//   //       for (let period = 1; period <= periodsPerDay; period++) {
-//   //         const subject = subjects[0]?._id;
-//   //         const teacher = teachers[0]?._id;
-//   //         const room = classes[0]?.name;
-
-//   //         if (subject && teacher && room) {
-//   //           generatedLectures.push({
-//   //             subject,
-//   //             teacher,
-//   //             division,
-//   //             day,
-//   //             period,
-//   //             room,
-//   //           });
-//   //         }
-//   //       }
-//   //     });
-//   //   });
-
-//   //   return generatedLectures;
-//   // };
-
-
-
-//   //   const handleGenerate = async () => {
-
-//   //   if (!generateForm.departmentId || !generateForm.semester || !generateForm.academicYear) {
-//   //     toast.error('Please select Department, Semester, and Academic Year');
-//   //     return;
-//   //   }
-
-//   //   setLoading(true);
-
-//   //   try {
-//   //     // ✅ Format lectures with only _id and necessary fields
-//   //     const formattedLectures = lectures.map((lec) => ({
-//   //       subject: lec.subject._id,
-//   //       teacher: lec.teacher._id,
-//   //       division: lec.division, // or lec.division._id if it's an object
-//   //       day: lec.day,
-//   //       period: lec.period,
-//   //       room: lec.room,
-//   //     }));
-
-//   //     const result = await timetableService.generateTimetable({
-//   //       ...generateForm,
-//   //       subjects,
-//   //       teachers,
-//   //       classes,
-//   //       lectures: formattedLectures, // ✅ pass it here
-//   //     });
-
-//   //     if (result.success || result.id) {
-//   //       toast.success('Timetable generated successfully!');
-//   //       await loadTimetables();
-//   //       setActiveTab('list');
-
-//   //       setGenerateForm({
-//   //         departmentId: '',
-//   //         semester: '',
-//   //         academicYear: '',
-//   //         divisions: [],
-//   //       });
-//   //     } else {
-//   //       toast.error('Failed to generate timetable: ' + (result.message || 'Unknown error'));
-//   //     }
-//   //   } catch (error) {
-//   //     toast.error('Error generating timetable');
-//   //   } finally {
-//   //     setLoading(false);
-//   //   }
-//   // };
-
-
-//   // const handleView = async (timetableId) => {
-//   //   setLoading(true);
-//   //   try {
-//   //     const [result, statsResult] = await Promise.all([
-//   //       timetableService.getTimetable(timetableId, true),
-//   //       timetableService.getStatistics(timetableId)
-//   //     ]);
-//   //     console.log("📄 API Response for timetable:", result);
-//   //     console.log("📊 API Response for statistics:", statsResult);
-
-
-//   //     if (result.success || result.schedule) {
-//   //       setFormattedTimetable(result.data || result);
-//   //       setSelectedTimetable(timetableId);
-
-//   //       if (statsResult.success || statsResult.statistics) {
-//   //         setStatistics(statsResult.data?.statistics || statsResult.statistics);
-//   //       }
-
-
-//   //       setActiveTab('view');
-//   //     }
-//   //   } catch (error) {
-//   //     toast.error('Failed to load timetable');
-//   //     console.error('View timetable error:', error);
-//   //   } finally {
-//   //     setLoading(false);
-//   //   }
-//   // };
-
-//   //  const handleGenerate = async () => {
-//   //   if (!generateForm.departmentId || !generateForm.semester || !generateForm.academicYear) {
-//   //     toast.error('Please select Department, Semester, and Academic Year');
-//   //     return;
-//   //   }
-
-//   //   setLoading(true);
-
-//   //   try {
-//   //    // const formattedLectures = autoGenerateLectures(); // ✅ Auto-generate based on selected inputs
-
-//   //     const result = await timetableService.generateTimetable({
-//   //       ...generateForm,
-//   //       subjects,
-//   //       teachers,
-//   //       classes,
-//   //       lectures: formattedLectures, // ✅ now auto-generated
-//   //     });
-
-//   //     if (result.success || result.id) {
-//   //       toast.success('Timetable generated successfully!');
-//   //       await loadTimetables();
-//   //       setActiveTab('list');
-
-//   //       setGenerateForm({
-//   //         departmentId: '',
-//   //         semester: '',
-//   //         academicYear: '',
-//   //         divisions: [],
-//   //       });
-//   //     } else {
-//   //       toast.error('Failed to generate timetable: ' + (result.message || 'Unknown error'));
-//   //     }
-//   //   } catch (error) {
-//   //     toast.error('Error generating timetable');
-//   //   } finally {
-//   //     setLoading(false);
-//   //   }
-//   // };
 
 //   const handleGenerate = async () => {
-//     console.log("✅ CLASSES:", classes);
-//     if (
-//       !generateForm.departmentId ||
-//       !generateForm.semester ||
-//       !generateForm.academicYear
-//     ) {
-//       toast.error('Please select Department, Semester, and Academic Year');
-//       return;
-//     }
-
-//     if (classes.length === 0) {
-//       toast.error('No classes available. Please check class data.');
-//       return;
-//     }
-//     console.log("✅ DIVISIONS:", generateForm.divisions); // Add this
-//     setLoading(true);
-
 //     try {
-//       console.log("📤 Sending data", {
-//         departmentId: generateForm.departmentId,
-//         semester: generateForm.semester,
-//         academicYear: generateForm.academicYear,
-//         classes,
-//         teachers,
-//         subjects,
-//         divisions,
+//       setLoading(true);
+
+//       console.log('📝 Initial Data:', {
+//         subjects: subjects?.length,
+//         teachers: teachers?.length,
+//         classes: classes?.length,
+//         semester: generateForm.semester
 //       });
 
-//       const result = await timetableService.generateTimetable({
+//       // Basic validation
+//       if (
+//         !generateForm.departmentId ||
+//         !generateForm.semester ||
+//         !generateForm.academicYear ||
+//         !generateForm.divisions.length
+//       ) {
+//         toast.error('Please fill all required fields');
+//         return;
+//       }
+
+//       // Normalize and filter by semester
+//       const normalizedSubjects = normalizeSubjects(subjects);
+//       const filteredSubjects = normalizedSubjects.filter(
+//         (s) => String(s.semester).trim() === String(generateForm.semester).trim()
+//       );
+
+//        const filteredTeachers = teachers.filter(
+//         (t) => String(t.semester).trim() === String(generateForm.semester).trim()
+//       );
+
+//       // ✅ Classroom filtering with fallback
+//       let filteredClasses = classes;
+//       const allHaveSemester = classes.every((c) => c.semester !== undefined);
+//       if (allHaveSemester) {
+//         filteredClasses = classes.filter(
+//           (c) => String(c.semester).trim() === String(generateForm.semester).trim()
+//         );
+//       }
+
+//        // Final validations
+//       if (!filteredSubjects.length) {
+//         toast.error(`No subjects available for semester ${generateForm.semester}`);
+//         return;
+//       }
+
+//       if (!filteredTeachers.length) {
+//         toast.error(`No teachers available for semester ${generateForm.semester}`);
+//         return;
+//       }
+
+//       if (!filteredClasses.length) {
+//         toast.error(`No classrooms available for semester ${generateForm.semester}`);
+//         return;
+//       }
+
+//       const filteredData = {
 //         departmentId: generateForm.departmentId,
 //         semester: generateForm.semester,
 //         academicYear: generateForm.academicYear,
-//         classes,
-//         teachers,
-//         subjects,
-//         divisions,
-//       });
+//         divisions: generateForm.divisions,
+//         subjects: filteredSubjects,
+//         teachers: filteredTeachers,
+//         classes: filteredClasses
+//       };
+
+//         console.log('🔄 Sending generation request:', filteredData);
+
+//       const result = await timetableService.generateTimetable(filteredData);
 
 //       if (result.success) {
-//         toast.success('Timetable generated successfully!');
+//         toast.success('Timetable generated successfully');
 //         await loadTimetables();
 //         setActiveTab('list');
-
-//         setGenerateForm({
-//           departmentId: '',
-//           semester: '',
-//           academicYear: '',
-//           divisions: [],
-//         });
 //       } else {
-//         toast.error('Failed to generate timetable: ' + (result.message || 'Unknown error'));
+//         toast.error(result.error || 'Failed to generate timetable');
 //       }
 //     } catch (error) {
-//       toast.error('Error generating timetable');
-//       console.error(error);
+//       console.error('❌ Generation error:', error);
+//       toast.error(error.message || 'Failed to generate timetable');
 //     } finally {
 //       setLoading(false);
 //     }
 //   };
 
+// // ✅ Validation function with structured logs
+//   const validateData = (data) => {
+//     const errors = [];
 
+//     if (!data.departmentId) errors.push('Please select a department');
+//     if (!data.semester) errors.push('Please select a semester');
+//     if (!data.academicYear) errors.push('Please select an academic year');
+//     if (!data.divisions?.length) errors.push('Please select at least one division');
 
+//     console.log('🔍 Validation input:', {
+//       departmentId: data.departmentId,
+//       semester: data.semester,
+//       subjectsCount: data.subjects?.length,
+//       rawSubjects: data.subjects
+//     });
+
+//     const normalizedSubjects = normalizeSubjects(data.subjects);
+//     console.log('📚 Normalized subjects:', normalizedSubjects.map(s => ({
+//       name: s.name,
+//       semester: s.semester
+//     })));
+
+//     const semesterSubjects = normalizedSubjects.filter(subject => {
+//       const subjectSemester = String(subject.semester).trim();
+//       const targetSemester = String(data.semester).trim();
+//       console.log(`Comparing subject "${subject.name}": ${subjectSemester} === ${targetSemester}`);
+//       return subjectSemester === targetSemester;
+//     });
+
+//     console.log('🎯 Filtered subjects:', {
+//       semester: data.semester,
+//       total: normalizedSubjects.length,
+//       filtered: semesterSubjects.length,
+//       subjects: semesterSubjects.map(s => s.name)
+//     });
+
+//     if (!semesterSubjects.length) {
+//       errors.push(`No subjects available for semester ${data.semester}`);
+//     }
+
+//     const semesterTeachers = data.teachers?.filter(t =>
+//       String(t.semester).trim() === String(data.semester).trim()
+//     );
+//     if (!semesterTeachers?.length) {
+//       errors.push(`No teachers available for semester ${data.semester}`);
+//     }
+
+//     const semesterClasses = data.classes?.filter(c =>
+//       String(c.semester).trim() === String(data.semester).trim()
+//     );
+//     if (!semesterClasses?.length) {
+//       errors.push(`No classrooms available for semester ${data.semester}`);
+//     }
+
+//     return errors;
+//   };
+
+//   const normalizeSubjects = (subjects) => {
+//   if (!subjects) return [];
+
+//   let rawSubjects = [];
+
+//   if (subjects.subjects && Array.isArray(subjects.subjects)) {
+//     rawSubjects = subjects.subjects;
+//   } else if (Array.isArray(subjects)) {
+//     rawSubjects = subjects;
+//   } else if (typeof subjects === 'object') {
+//     rawSubjects = Object.values(subjects).flat();
+//   }
+
+//   return rawSubjects.map(subject => ({
+//     _id: subject._id || subject.id,
+//      // ✅ Prefer subject.subjectName first (matches DB field)
+//     name: subject.subjectName || subject.name || subject.subject_name || 'Unnamed Subject',
+//     semester: String(subject.semester || subject.sem_id || '').trim(),
+//     type: subject.type || 'Theory',
+//     department: subject.department_id || subject.department,
+//     credits: subject.credits || 0,
+//     teachers: subject.teachers || []
+//    }));
+// };
 
 //   const handleView = async (timetableId) => {
 //     setLoading(true);
 //     try {
 //       const [result, statsResult] = await Promise.all([
-//         timetableService.getTimetable(timetableId, true),
-//         timetableService.getStatistics(timetableId)
+//         timetableService.getTimetables(timetableId, true),
+//         timetableService.getStatistics(timetableId),
 //       ]);
+//       console.log("📋 Formatted Timetable API Response:", result);
 
-//       console.log("📄 API Response for timetable:", result);
-//       console.log("📊 API Response for statistics:", statsResult);
+
+//       console.log("📥 Raw timetable API response:", result.data);
+//       console.log("📊 Raw statistics API response:", statsResult.data);
 
 //       if (result.success && result.data) {
-//         // ✅ Important: directly use result.data
-//         console.log("🎯 Final formattedTimetable set to:", result.data);
 //         setFormattedTimetable(result.data);
 //         setSelectedTimetable(timetableId);
 
@@ -483,11 +368,11 @@
 //           setStatistics(statsResult.data.statistics);
 //         }
 
-//         setActiveTab('view');
+//         setActiveTab("view");
 //       }
 //     } catch (error) {
-//       toast.error('Failed to load timetable');
-//       console.error('View timetable error:', error);
+//       toast.error("Failed to load timetable");
+//       console.error("View timetable error:", error);
 //     } finally {
 //       setLoading(false);
 //     }
@@ -522,28 +407,115 @@
 //     }
 //   };
 
-//   const handleExport = async (id, format) => {
-//     try {
-//       const response = await timetableService.exportTimetable(id, format);
+//   // const handleExport = async (id, format) => {
+//   //   try {
+//   //     const response = await timetableService.exportTimetable(id, format);
 
-//       if (format === 'csv') {
-//         const blob = await response.blob();
-//         const url = window.URL.createObjectURL(blob);
-//         const a = document.createElement('a');
-//         a.href = url;
-//         a.download = `timetable_${id}.csv`;
-//         a.click();
-//         window.URL.revokeObjectURL(url);
-//         toast.success('CSV exported successfully!');
-//       } else {
-//         // Handle other export formats (PDF, etc.)
-//         toast.success('Export completed!');
-//       }
-//     } catch (error) {
-//       toast.error('Failed to export timetable');
-//       console.error('Export error:', error);
+//   //     if (format === 'csv') {
+//   //       const blob = await response.blob();
+//   //       const url = window.URL.createObjectURL(blob);
+//   //       const a = document.createElement('a');
+//   //       a.href = url;
+//   //       a.download = `timetable_${id}.csv`;
+//   //       a.click();
+//   //       window.URL.revokeObjectURL(url);
+//   //       toast.success('CSV exported successfully!');
+//   //     } else {
+//   //       toast.success('Export completed!');
+//   //     }
+//   //   } catch (error) {
+//   //     toast.error('Failed to export timetable');
+//   //     console.error('Export error:', error);
+//   //   }
+//   // };
+
+
+ 
+
+// const handleExport = async (divisionName, format) => {
+//   try {
+//     const response = await timetableService.exportTimetable(divisionName, format);
+
+//     if (format === 'pdf') {
+//       const blob = await response.blob();
+//       const url = window.URL.createObjectURL(blob);
+//       const a = document.createElement('a');
+//       a.href = url;
+//       a.download = `timetable_${divisionName}.pdf`;
+//       a.click();
+//       window.URL.revokeObjectURL(url);
+//       toast.success('PDF exported successfully!');
+//     } else {
+//       toast.success('Export completed!');
 //     }
-//   };
+//   } catch (error) {
+//     toast.error('Failed to export timetable');
+//     console.error('Export error:', error);
+//   }
+// };
+
+//   const calculateStatistics = async (timetableData, teachers, classrooms) => {
+//     let totalClasses = 0;
+//     let labSessions = 0;
+//     let theorySessions = 0;
+
+//     const teacherLectureCount = {};
+//     const roomLectureCount = {};
+
+//     if (timetableData && timetableData.divisions) {
+//       timetableData.divisions.forEach((division) => {
+//         const schedule = division.schedule;
+
+//         for (const day in schedule) {
+//           const periods = schedule[day];
+//           periods.forEach((lecture) => {
+//             if (lecture) {
+//               totalClasses++;
+
+//               // Count labs
+//               if (lecture.isLab) {
+//                 labSessions++;
+//               } else {
+//                 theorySessions++;
+//               }
+
+//               // Count teacher usage
+//               if (lecture.teacher) {
+//                 teacherLectureCount[lecture.teacher] = (teacherLectureCount[lecture.teacher] || 0) + 1;
+//               }
+
+//               // Count room usage
+//               if (lecture.room) {
+//                 roomLectureCount[lecture.room] = (roomLectureCount[lecture.room] || 0) + 1;
+//               }
+//             }
+//           });
+//         }
+//       });
+//     }
+
+//     const totalTeacherPeriods = teachers.length * 12 * 5; // assuming 6 periods/day, 5 days/week, 2 semesters
+//     const usedTeacherPeriods = Object.values(teacherLectureCount).reduce((a, b) => a + b, 0);
+
+//     const totalRoomPeriods = classrooms.length * 6 * 5;
+//     const usedRoomPeriods = Object.values(roomLectureCount).reduce((a, b) => a + b, 0);
+
+//     const teacherUtilization = totalTeacherPeriods ? usedTeacherPeriods / totalTeacherPeriods : 0;
+//     const roomUtilization = totalRoomPeriods ? usedRoomPeriods / totalRoomPeriods : 0;
+
+//     const fitness_score = totalClasses * 2 + teacherUtilization * 100;
+
+//     return {
+//       totalClasses,
+//       labSessions,
+//       theorySessions,
+//       teacherUtilization,
+//       roomUtilization,
+//       fitness_score,
+//     };
+//   }
+
+
 
 //   const handleClone = async (id) => {
 //     const newAcademicYear = prompt('Enter new academic year:');
@@ -568,35 +540,6 @@
 //     }
 //   };
 
-//   // const formatSchedule = (scheduleArrayFormat) => {
-//   //   const formatted = {};
-
-//   //   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-//   //   for (const day of days) {
-//   //     formatted[day] = {};
-//   //     const periods = scheduleArrayFormat[day] || [];
-//   //     periods.forEach((item, index) => {
-//   //       formatted[day][index + 1] = {
-//   //         subject: item.subject || "Free",
-//   //         teacher: item.teacher || "",
-//   //       };
-//   //     });
-//   //   }
-
-//   //   return formatted;
-//   // };
-
-//   const formatSchedule = (lecturesArray) => {
-//     const schedule = {};
-//     for (const lecture of lecturesArray) {
-//       const { day, period, subject_name, teacher_name, classroom } = lecture;
-
-//       if (!schedule[day]) schedule[day] = {};
-//       schedule[day][period] = { subject_name, teacher_name, classroom };
-//     }
-//     return schedule;
-//   };
-
 //   useEffect(() => {
 //     loadTimetables();
 //   }, [filters]);
@@ -606,22 +549,20 @@
 //   }, [timetables]);
 
 //   useEffect(() => {
-//     console.log("✅ formattedTimetable.divisions =", formattedTimetable?.divisions);
+//     // console.log("✅ formattedTimetable.divisions =", formattedTimetable?.divisions);
 //     formattedTimetable?.divisions?.forEach((div, idx) => {
-//       console.log(`➡️ Division ${idx}:`, div.division_name, div.schedule);
+//       //console.log(`➡️ Division ${idx}:`, div.division_name, div.schedule);
 //     });
 //   }, [formattedTimetable]);
 
-
-
-//   console.log("🧠 Formatted Timetable in State:", formattedTimetable);
+//    //console.log("🧠 Formatted Timetable in State:", formattedTimetable);
 
 //   // Render UI
 //   return (
 //     <div className="max-w-7xl mx-auto p-6">
 //       <div className="mb-8">
 //         <h1 className="text-3xl font-bold text-gray-900 mb-2">Timetable Management</h1>
-//         <p className="text-gray-600">Manage and generate timetables</p>
+//         <p className="text-gray-600">Manage and generate timetables using genetic algorithm</p>
 //       </div>
 
 //       {/* Navigation Tabs */}
@@ -703,13 +644,9 @@
 //                 {/* Academic Year Filter */}
 //                 <div>
 //                   <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
-
-
 //                   <select
-//                     value={generateForm.academicYear}
-//                     onChange={(e) =>
-//                       setGenerateForm({ ...generateForm, academicYear: e.target.value })
-//                     }
+//                     value={filters.academicYear}
+//                     onChange={(e) => setFilters({ ...filters, academicYear: e.target.value })}
 //                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 //                   >
 //                     <option value="">Select Academic Year</option>
@@ -719,7 +656,6 @@
 //                       </option>
 //                     ))}
 //                   </select>
-
 //                 </div>
 
 //                 {/* Status Filter */}
@@ -769,11 +705,16 @@
 //                   <div className="flex items-center justify-between mb-4">
 //                     <div>
 //                       <h3 className="text-lg font-semibold text-gray-900">
-//                         {timetable.semester} - {timetable.academic_year || timetable.academicYear}
+//                         Semester {timetable.semester} - {timetable.academic_year || timetable.academicYear}
 //                       </h3>
 //                       <p className="text-gray-600">
 //                         Department: {timetable.department_id?.name || timetable.department?.name || 'Unknown'}
 //                       </p>
+//                       {timetable.generation_metadata?.algorithm_version && (
+//                         <p className="text-sm text-blue-600">
+//                           Generated using: {timetable.generation_metadata.algorithm_version}
+//                         </p>
+//                       )}
 //                     </div>
 //                     <div className="flex items-center space-x-2">
 //                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${timetable.status === 'published'
@@ -797,22 +738,19 @@
 //                     </div>
 //                     <div className="text-center">
 //                       <div className="text-2xl font-bold text-green-600">
-//                         {timetable.generation_metadata?.fitness_score?.toFixed(2) ||
-//                           timetable.fitnessScore?.toFixed(2) || 'N/A'}
+//                         {timetable.generation_metadata?.fitness_score?.toFixed(3) || 'N/A'}
 //                       </div>
 //                       <div className="text-sm text-gray-600">Fitness Score</div>
 //                     </div>
 //                     <div className="text-center">
 //                       <div className="text-2xl font-bold text-purple-600">
-//                         {timetable.generation_metadata?.generation_count ||
-//                           timetable.generationCount || 'N/A'}
+//                         {timetable.generation_metadata?.generation_count || 'N/A'}
 //                       </div>
 //                       <div className="text-sm text-gray-600">Generations</div>
 //                     </div>
 //                     <div className="text-center">
 //                       <div className="text-2xl font-bold text-orange-600">
-//                         {timetable.generation_metadata?.conflicts_resolved ||
-//                           timetable.conflictsResolved || 0}
+//                         {timetable.generation_metadata?.conflicts_resolved || 0}
 //                       </div>
 //                       <div className="text-sm text-gray-600">Conflicts</div>
 //                     </div>
@@ -959,10 +897,17 @@
 //                 </div>
 //               </div>
 
+
+
+
+
+
+
 //               <div className="bg-blue-50 p-4 rounded-md">
-//                 <h4 className="font-medium text-blue-900 mb-2">Generation Settings</h4>
+//                 <h4 className="font-medium text-blue-900 mb-2">🧬 Genetic Algorithm Settings</h4>
 //                 <p className="text-sm text-blue-700">
-//                   The system will automatically optimize the timetable considering all constraints
+//                   The system will use advanced genetic algorithms to optimize the timetable considering all constraints,
+//                   teacher availability, and resource allocation for the best possible solution.
 //                 </p>
 //               </div>
 
@@ -975,9 +920,9 @@
 //                   {loading ? (
 //                     <>
 //                       <RefreshCw className="w-4 h-4 animate-spin inline mr-2" />
-//                       Generating...
+//                       Generating with AI...
 //                     </>
-//                   ) : 'Generate Timetable'}
+//                   ) : 'Generate Optimized Timetable'}
 //                 </button>
 //               </div>
 //             </div>
@@ -986,7 +931,8 @@
 //       )}
 
 //       {/* View Timetable */}
-//       {activeTab === 'view' && selectedTimetable && (
+//       {activeTab === 'view' && selectedTimetable && formattedTimetable && (
+
 //         <div className="space-y-6">
 //           {statistics && (
 //             <div className="bg-white p-6 rounded-lg border">
@@ -994,17 +940,18 @@
 //                 <BarChart3 className="w-5 h-5 mr-2" />
 //                 Timetable Statistics
 //               </h3>
-//               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+
+//               <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
 //                 <div className="text-center">
-//                   <div className="text-2xl font-bold text-blue-600">{statistics.totalClasses}</div>
+//                   <div className="text-2xl font-bold text-blue-600">{statistics.totalClasses || 0}</div>
 //                   <div className="text-sm text-gray-600">Total Classes</div>
 //                 </div>
 //                 <div className="text-center">
-//                   <div className="text-2xl font-bold text-green-600">{statistics.labSessions}</div>
+//                   <div className="text-2xl font-bold text-green-600">{statistics.labSessions || 0}</div>
 //                   <div className="text-sm text-gray-600">Lab Sessions</div>
 //                 </div>
 //                 <div className="text-center">
-//                   <div className="text-2xl font-bold text-purple-600">{statistics.theorySessions}</div>
+//                   <div className="text-2xl font-bold text-purple-600">{statistics.theorySessions || 0}</div>
 //                   <div className="text-sm text-gray-600">Theory Sessions</div>
 //                 </div>
 //                 <div className="text-center">
@@ -1016,176 +963,116 @@
 //                   <div className="text-sm text-gray-600">Teacher Utilization</div>
 //                 </div>
 //                 <div className="text-center">
-//                   <div className="text-2xl font-bold text-red-600">
+//                   <div className="text-2xl font-bold text-yellow-600">
 //                     {typeof statistics.roomUtilization === 'number'
 //                       ? `${(statistics.roomUtilization * 100).toFixed(1)}%`
 //                       : 'N/A'}
 //                   </div>
 //                   <div className="text-sm text-gray-600">Room Utilization</div>
 //                 </div>
+//                 <div className="text-center">
+//                   <div className="text-2xl font-bold text-red-600">
+//                     {typeof statistics.fitness_score === 'number'
+//                       ? statistics.fitness_score.toFixed(3)
+//                       : 'N/A'}
+//                   </div>
+//                   <div className="text-sm text-gray-600">Fitness Score</div>
+//                 </div>
 //               </div>
+
 //             </div>
 //           )}
+//           {/* 
+          
+// {console.log("🧾 formattedTimetable:", formattedTimetable)}
+// {formattedTimetable?.divisions?.length > 0 ? (
+//   formattedTimetable.divisions.map((division, idx) => {
+//     console.log(`📌 Division ${idx + 1}: ${division.division_name}`);
+//     console.log("📌 Schedule for this division:", division.schedule);
 
-//           {/* {console.log("🔥 formattedTimetable", formattedTimetable)}
-//           {console.log("📌 Divisions in generateForm:", generateForm.divisions)}
-//           {console.log("📌 All available divisions:", divisions)} */}
+//     const schedule = division.schedule || {};
+//     const hasSchedule = Object.keys(schedule).length > 0;
 
-
-//           {/* {formattedTimetable && (
-//             <div className="space-y-6">
-//               {divisions
-//                .filter(div => formattedTimetable?.divisions?.includes(div))
-//                 .map(division => (
-//                   <div key={division} className="bg-white rounded-lg border">
-//                     <div className="px-6 py-4 border-b">
-//                       <h3 className="text-lg font-semibold">
-//                         Division {division} - {formattedTimetable?.semester || 'N/A'}
-//                       </h3>
-//                     </div>
-//                     <div className="p-6 overflow-x-auto">
-//                       {renderTimetableGrid(division, formattedTimetable)}
-//                     </div>
-//                   </div>
-//                 ))
-//               }
-//             </div>
-//           )} */}
-//           {/* {formattedTimetable?.divisions?.length > 0 && (
-//             <div className="space-y-6">
-//               {formattedTimetable.divisions.map((division) => (
-//                 <div key={division} className="bg-white rounded-lg border">
-//                   <div className="px-6 py-4 border-b">
-//                     <h3 className="text-lg font-semibold">
-//                       Division {division} - {formattedTimetable?.semester || 'N/A'}
-//                     </h3>
-//                   </div>
-//                   <div className="p-6 overflow-x-auto">
-//                     {renderTimetableGrid(division, formattedTimetable)}
-//                   </div>
-//                 </div>
-//               ))}
-//             </div>
-//           )} */}
-
-
-
-
-//           {/* {formattedTimetable?.divisions?.length > 0 && (
-//   <div className="space-y-6">
-//     {formattedTimetable.divisions.map(division => (
-//       <div key={division._id} className="bg-white rounded-lg border">
+//     return (
+//       <div key={idx} className="bg-white rounded-lg border">
 //         <div className="px-6 py-4 border-b">
 //           <h3 className="text-lg font-semibold">
 //             Division {division.division_name} — Semester {formattedTimetable.semester}
 //           </h3>
 //         </div>
 //         <div className="p-6 overflow-x-auto">
-//           {renderTimetableGrid(division.schedule, division.division_name)}
+//           {hasSchedule ? (
+//             renderTimetableGrid(division.division_name, formattedTimetable) // ✅ Corrected here
+//           ) : (
+//             <div className="text-center py-8 text-gray-500">
+//               No schedule found for this division
+//             </div>
+//           )}
 //         </div>
 //       </div>
-//     ))}
+//     );
+//   })
+// ) : (
+//   <div className="text-center py-8 text-gray-500">
+//     No divisions found or timetable not generated yet.
 //   </div>
-// )} */}
-//           {/* {formattedTimetable && formattedTimetable.divisions && (
-//             <div className="space-y-6">
-//               {formattedTimetable.divisions.map((division, index) => {
-//                 const schedule = division.schedule || [];
+// )} */  }
 
-//                 console.log(`🗓️ Schedule for ${division.division_name}`, schedule);
+//           {console.log("🧾 formattedTimetable:", formattedTimetable)}
+//           {console.log("📚 Subjects:", subjects)}
+//           {console.log("🏫 Classrooms:", classes)}
 
+//           {formattedTimetable?.divisions?.length > 0 ? (
+//             formattedTimetable.divisions.map((division, idx) => {
+//               console.log(`📌 Division ${idx + 1}: ${division.division_name}`);
+//               console.log("📌 Schedule for this division:", division.schedule);
 
-//                 return (
-//                   <div key={index} className="bg-white rounded-lg border">
-//                     <div className="px-6 py-4 border-b">
-//                       <h3 className="text-lg font-semibold">
-//                         Division {division.division_name} — Semester {formattedTimetable.semester}
-//                       </h3>
-//                     </div>
-//                     <div className="p-6 overflow-x-auto">
-//                       {division.schedule && Object.keys(division.schedule).length > 0 ? (
-//                         renderTimetableGrid(
-//                           division.division_name,
-//                           formatSchedule(division.schedule)
-//                         )
-//                       ) : (
-//                         <p className="text-gray-500 text-sm italic">No schedule found for this division.</p>
-//                       )}
+//               const schedule = division.schedule || {};
+//               const hasSchedule = Object.keys(schedule).length > 0;
 
-
-//                     </div>
+//               return (
+//                 <div key={idx} className="bg-white rounded-lg border mb-6">
+//                   <div className="px-6 py-4 border-b">
+//                     <h3 className="text-lg font-semibold">
+//                       Division {division.division_name} — Semester {formattedTimetable.semester}
+//                     </h3>
 //                   </div>
-//                 );
-//               })}
-//             </div>
-//           )} */}
+//                   <div className="p-6 overflow-x-auto">
+//                     {console.log("📦 formattedTimetable = ", formattedTimetable)
+//                       }
+//                     {hasSchedule ? (
+//                       // renderTimetableGrid(division.division_name, schedule) // ✅ Pass only the schedule
+//                       renderTimetableGrid(
+//                         division.division_name,
+//                         schedule,
+//                         formattedTimetable.subjects || subjects,
+//                         formattedTimetable.classes || classes
+//                       )
 
-//         {formattedTimetable.divisions.map((division, index) => {
-//   const schedule = division.schedule || {};
-//   const hasSchedule = Object.keys(schedule).length > 0;
-
-//   console.log(`🗓️ Schedule for ${division.division_name}:`, schedule);
-
-//   let formattedSchedule;
-//   try {
-//     formattedSchedule = formatSchedule(schedule);
-//     console.log(`🎯 Formatted schedule for ${division.division_name}:`, formattedSchedule);
-//   } catch (error) {
-//     console.error(`❌ Error formatting schedule for ${division.division_name}:`, error);
-//     formattedSchedule = null;
-//   }
-
-//   return (
-//     <div key={index}>
-//       <h3>Division {division.division_name} — Semester {formattedTimetable.semester}</h3>
-
-//       {hasSchedule && formattedSchedule && Object.keys(formattedSchedule).length > 0 ? (
-//         renderTimetableGrid(division.division_name, formattedSchedule)
-//       ) : hasSchedule ? (
-//         <>
-//           <p>⚠️ Unable to format schedule. Showing raw JSON:</p>
-//           <pre>{JSON.stringify(schedule, null, 2)}</pre>
-//         </>
-//       ) : (
-//         <p>🚫 No schedule found for this division.</p>
-//       )}
-//     </div>
-//   );
-// })}
+//                     ) : (
+//                       <div className="text-center py-8 text-gray-500">
+//                         No schedule found for this division
+//                       </div>
+//                     )}
+//                   </div>
+//                 </div>
+//               );
+//             })
+//           ) : (
+//             <div className="text-center py-8 text-gray-500">
+//               No divisions found or timetable not generated yet.
+//             </div> 
+//           )}
 
 
 
-
-
-
-
-
-
-//           <div className="flex justify-end space-x-4">
-//             <button
-//               onClick={() => handleExport(selectedTimetable, 'csv')}
-//               className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-//             >
-//               <Download className="w-4 h-4 mr-2" />
-//               Export CSV
-//             </button>
-//             <button
-//               onClick={() => setActiveTab('list')}
-//               className="flex items-center bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-//             >
-//               Back to List
-//             </button>
-//           </div>
 //         </div>
 //       )}
-//     </div>
+//     </div> 
 //   );
 // };
 
 // export default Timetables;
- 
- 
-
 
 
 import React, { useState, useEffect } from 'react';
@@ -1451,45 +1338,7 @@ const Timetables = () => {
     }
   };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-   // const normalizeSubjects = (subjects) => {
-  //   if (!subjects) return [];
-
-  //   let rawSubjects = [];
-
-  //   if (subjects.subjects && Array.isArray(subjects.subjects)) {
-  //     rawSubjects = subjects.subjects;
-  //   } else if (Array.isArray(subjects)) {
-  //     rawSubjects = subjects;
-  //   } else if (typeof subjects === 'object') {
-  //     rawSubjects = Object.values(subjects).flat();
-  //   }
-
-  //   return rawSubjects.map(subject => ({
-  //     _id: subject._id || subject.id,
-  //     name: subject.name || subject.subject_name || 'Unnamed Subject',
-  //     semester: String(subject.semester || subject.sem_id || '').trim(),
-  //     type: subject.type || 'Theory',
-  //     department: subject.department_id || subject.department,
-  //     credits: subject.credits || 0,
-  //     teachers: subject.teachers || []
-  //   }));
-  // };
-
-  // ✅ Validation function with structured logs
+ // ✅ Validation function with structured logs
   const validateData = (data) => {
     const errors = [];
 
@@ -2188,7 +2037,7 @@ const handleExport = async (divisionName, format) => {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-yellow-600">
-                    {typeof statistics.roomUtilization === 'number'
+                    {typeof statistics.roomUtilization === 'number'  
                       ? `${(statistics.roomUtilization * 100).toFixed(1)}%`
                       : 'N/A'}
                   </div>
@@ -2285,7 +2134,7 @@ const handleExport = async (divisionName, format) => {
           ) : (
             <div className="text-center py-8 text-gray-500">
               No divisions found or timetable not generated yet.
-            </div> 
+            </div>   
           )}
 
 

@@ -9,7 +9,7 @@ import Teachers from './pages/Teachers/Teachers.jsx';
 import Subjects from './pages/Subjects/Subjects.jsx';
 
 import Timetables from './pages/Timetables/Timetables.jsx';
-import Departments from './pages/Department/Department.jsx'; // ✅ Imported Departments
+import Departments from './pages/Department/Department.jsx'; 
 import ProtectedRoute from './components/Common/ProtectedRoute.js';
 import ClassPage from './pages/Class/Class.jsx'; 
 
@@ -27,18 +27,18 @@ function App() {
   return (
     <div className="App">
       <Routes>
-        <Route 
+        {/* <Route 
           path="/login" 
           element={!isAuthenticated ? <AuthPage /> : <Navigate to="/dashboard" />} 
-        />
+        /> */}
         <Route path="/" element={<Layout />}>
           <Route index element={<Navigate to="/dashboard" />} />
           <Route 
             path="dashboard" 
             element={
-              <ProtectedRoute>
+              
                 <Dashboard />
-              </ProtectedRoute>
+              
             } 
           />
           
@@ -54,41 +54,41 @@ function App() {
           <Route 
             path="departments" // ✅ Added route for departments
             element={
-              <ProtectedRoute>
+              
                 <Departments />
-              </ProtectedRoute>
+             
             } 
           />
           <Route 
             path="class" 
             element={
-              <ProtectedRoute>
+             
                 <ClassPage />
-              </ProtectedRoute>
+              
             } 
           />
           <Route 
             path="subjects" 
             element={
-              <ProtectedRoute>
+              
                 <Subjects />
-              </ProtectedRoute>
+              
             } 
           />
          
           <Route 
             path="timetables" 
             element={
-              <ProtectedRoute>
+              
                 <Timetables />
-              </ProtectedRoute>
+              
             } 
           />
         </Route>
-        <Route 
+        {/* <Route 
           path="*" 
           element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} 
-        />
+        /> */}
       </Routes>
     </div>
   );
