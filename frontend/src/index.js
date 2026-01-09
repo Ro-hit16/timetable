@@ -8,13 +8,16 @@ import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
-
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+console.log('GOOGLE ID:', process.env.REACT_APP_GOOGLE_CLIENT_ID);
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
     <BrowserRouter>
       <AuthProvider>
         <App />
@@ -31,5 +34,6 @@ root.render(
         />
       </AuthProvider>
     </BrowserRouter>
+    </GoogleOAuthProvider>
   </React.StrictMode>
 );

@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
+import axios from 'axios';
+import { GoogleLogin } from '@react-oauth/google';
+import { Navigate } from 'react-router-dom';
+
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -80,10 +84,32 @@ const AuthPage = () => {
   };
 
   // === GOOGLE HANDLER ===
-  const handleGoogleLogin = () => {
-    // TODO: integrate your Google OAuth endpoint
-    window.location.href = '/api/auth/google';
-  };
+ const handleGoogleLogin = async (credentialResponse) => {
+  try {
+    const res = await fetch('/api/auth/google-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: credentialResponse.credential,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      // store token + user exactly like normal login
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      // update auth context manually
+      window.location.href = '/dashboard'; 
+      // 👆 simplest & 100% reliable redirect
+    }
+  } catch (err) {
+    console.error('Google login failed:', err);
+  }
+};
+
 
   return (
     <div
@@ -99,14 +125,20 @@ const AuthPage = () => {
           <div className="text-red-200 text-sm text-center mb-4">{errorMessage}</div>
         )}
 
-        <button
+        {/* <button
           type="button"
           onClick={handleGoogleLogin}
           className="w-full bg-white/90 hover:bg-white text-gray-700 font-medium py-2 rounded-lg flex items-center justify-center mb-4"
         >
           <FcGoogle size={22} className="mr-2" />
           Continue with Google
-        </button>
+        </button> */}
+
+        <GoogleLogin
+          onSuccess={handleGoogleLogin}
+          onError={() => console.log('Login Failed')}
+        />
+
 
         <div className="flex items-center mb-4">
           <div className="flex-1 h-px bg-white/40"></div>
@@ -165,11 +197,10 @@ const AuthPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 rounded-lg font-semibold ${
-              loading ? 'bg-purple-300 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
-            } text-white flex items-center justify-center`}
+            className={`w-full py-3 rounded-lg font-semibold ${loading ? 'bg-purple-300 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
+              } text-white flex items-center justify-center`}
           >
-            {loading && <Loader2 className="animate-spin mr-2" size={18}/>}
+            {loading && <Loader2 className="animate-spin mr-2" size={18} />}
             {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Register')}
           </button>
         </form>
@@ -181,9 +212,8 @@ const AuthPage = () => {
           </button>
         </p>
       </div>
-     </div>
+    </div>
   );
- };
+};
 
- export default AuthPage;
- 
+export default AuthPage;

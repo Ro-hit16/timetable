@@ -15,7 +15,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import authRoutes from './routes/auth.route.js';
-
+import activityRoutes from './routes/activity.route.js'
 import departmentRoutes from './routes/departments.route.js';
 
 import subjectRoutes from './routes/subjects.route.js';
@@ -73,6 +73,7 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/pdf', pdfRoutes);
+app.use('/api/activity', activityRoutes);
 app.get('/health', (req, res) => res.status(200).json({ success: true, message: 'Server is running!' }));
 
 app.use('/api/departments', departmentRoutes);
