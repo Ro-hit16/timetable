@@ -234,7 +234,26 @@ const teacherSchema = new mongoose.Schema({
     required: [true, 'Semester is required'],
     min: 1,
     max: 8
-  }
+  },
+  maxWeeklyWorkload: {
+    type: Number,
+    default: 18
+  },
+  maxDailyWorkload: {
+    type: Number,
+    default: 4
+  },
+  unavailableSlots: [{
+    day: {
+      type: String,
+      enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    },
+    period: {
+      type: Number,
+      min: 1,
+      max: 6
+    }
+  }]
 }, {
   timestamps: true
 });

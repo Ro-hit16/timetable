@@ -13,7 +13,8 @@ const classSchema = new mongoose.Schema({
   },
    department_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', required: true },
    
-  semester: { type: String, required: true }
+  semester: { type: String, required: true },
+  capacity: { type: Number, default: 60 }
 }, {
   timestamps: true
 });

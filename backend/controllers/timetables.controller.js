@@ -1302,8 +1302,7 @@ static async generateTimetable(req, res, next) {
       }).lean(),
       
       classModel.find({
-        department_id: departmentId,
-        semester: targetSemester
+        department_id: departmentId
       }).lean()
     ]);
 
@@ -1337,7 +1336,7 @@ static async generateTimetable(req, res, next) {
     }
 
     if (classes.length === 0) {
-      return next(createError(400, `No classrooms found for department ${departmentId} and semester ${targetSemester}`));
+      return next(createError(400, `No classrooms found for department ${departmentId}`));
     }
 
     // Transform subjects
@@ -1519,10 +1518,27 @@ static async generateTimetable(req, res, next) {
     const teacherAssignments = new Map();
     const classAssignments = new Map();
 
-    // 🆕 CHANGE 8: Track division for each assignment
-    const teacherDivisionMap = new Map(); // teacherKey -> [divisions]
-    const classDivisionMap = new Map(); // classKey -> [divisions]
-    // ========================================================================
+    const teacherDivisionMap = new Map(); 
+    const classDivisionMap = new Map();
+
+    // Fetch teachers and classes to check properties
+    let teacherMap = new Map();
+    let classroomMap = new Map();
+    let teachersList = [];
+    try {
+      teachersList = await teacherModel.find().lean();
+      teacherMap = new Map(teachersList.map(t => [String(t._id), t]));
+      const classesList = await classModel.find().lean();
+      classesList.forEach(c => {
+        if (c.classNumber) classroomMap.set(c.classNumber.trim().toLowerCase(), c);
+        if (c.className) classroomMap.set(c.className.trim().toLowerCase(), c);
+      });
+    } catch (err) {
+      console.error('Error fetching models for validation:', err);
+    }
+
+    const teacherWeeklyWorkload = new Map();
+    const teacherDailyWorkload = new Map();
 
     timetable.divisions.forEach(division => {
       const divisionName = division.division_name || division.name;
@@ -1531,67 +1547,112 @@ static async generateTimetable(req, res, next) {
         if (!Array.isArray(periods)) return;
 
         periods.forEach((slot, periodIndex) => {
-          if (!slot || !slot.teacher) return;
+          if (!slot) return;
 
           // Check teacher conflicts
-          const teacherKey = `${slot.teacher._id}_${day}_${periodIndex}`;
-          
-          // 🆕 CHANGE 9: Enhanced teacher conflict tracking
-          if (teacherAssignments.has(teacherKey)) {
-            const previousDivision = teacherDivisionMap.get(teacherKey)[0];
-            conflicts.push({
-              type: 'teacher_conflict',
-              severity: previousDivision === divisionName ? 'medium' : 'high', // 🆕 Higher severity for cross-division
-              description: `Teacher ${slot.teacher.name} has multiple classes at period ${periodIndex + 1} on ${day}`,
-              details: {
-                teacher: slot.teacher.name,
-                teacherId: slot.teacher._id,
-                day,
-                period: periodIndex + 1,
-                divisions: [previousDivision, divisionName], // 🆕 Show which divisions conflict
-                conflictType: previousDivision === divisionName ? 'same-division' : 'cross-division'
+          if (slot.teacher) {
+            const tIdStr = String(slot.teacher._id);
+            const teacherKey = `${tIdStr}_${day}_${periodIndex}`;
+
+            teacherWeeklyWorkload.set(tIdStr, (teacherWeeklyWorkload.get(tIdStr) || 0) + 1);
+            const dailyKey = `${tIdStr}_${day}`;
+            teacherDailyWorkload.set(dailyKey, (teacherDailyWorkload.get(dailyKey) || 0) + 1);
+            
+            if (teacherAssignments.has(teacherKey)) {
+              const previousDivision = teacherDivisionMap.get(teacherKey)[0];
+              conflicts.push({
+                type: 'teacher_conflict',
+                severity: previousDivision === divisionName ? 'medium' : 'high',
+                description: `Teacher ${slot.teacher.name} has multiple classes at period ${periodIndex + 1} on ${day}`,
+                details: {
+                  teacher: slot.teacher.name,
+                  teacherId: slot.teacher._id,
+                  day,
+                  period: periodIndex + 1,
+                  divisions: [previousDivision, divisionName],
+                  conflictType: previousDivision === divisionName ? 'same-division' : 'cross-division'
+                }
+              });
+            } else {
+              teacherAssignments.set(teacherKey, true);
+              teacherDivisionMap.set(teacherKey, [divisionName]);
+            }
+
+            // Check availability
+            const teacher = teacherMap.get(tIdStr);
+            if (teacher && Array.isArray(teacher.unavailableSlots)) {
+              const isUnavailable = teacher.unavailableSlots.some(
+                us => us.day === day && us.period === (periodIndex + 1)
+              );
+              if (isUnavailable) {
+                conflicts.push({
+                  type: 'teacher_unavailability',
+                  severity: 'high',
+                  description: `Teacher ${slot.teacher.name} is scheduled during their marked unavailable period ${periodIndex + 1} on ${day}`,
+                  details: {
+                    teacher: slot.teacher.name,
+                    day,
+                    period: periodIndex + 1,
+                    division: divisionName
+                  }
+                });
               }
-            });
-          } else {
-            teacherAssignments.set(teacherKey, true);
-            teacherDivisionMap.set(teacherKey, [divisionName]);
+            }
           }
-          // ========================================================================
 
           // Check classroom conflicts
-          const classKey = `${slot.classroom}_${day}_${periodIndex}`;
-          
-          // 🆕 CHANGE 10: Enhanced classroom conflict tracking
-          if (classAssignments.has(classKey)) {
-            const previousDivision = classDivisionMap.get(classKey)[0];
-            conflicts.push({
-              type: 'classroom_conflict',
-              severity: previousDivision === divisionName ? 'low' : 'medium', // 🆕 Higher severity for cross-division
-              description: `Classroom ${slot.classroom} is double-booked at period ${periodIndex + 1} on ${day}`,
-              details: {
-                classroom: slot.classroom,
-                day,
-                period: periodIndex + 1,
-                divisions: [previousDivision, divisionName], // 🆕 Show which divisions conflict
-                conflictType: previousDivision === divisionName ? 'same-division' : 'cross-division'
-              }
-            });
-          } else {
-            classAssignments.set(classKey, true);
-            classDivisionMap.set(classKey, [divisionName]);
+          if (slot.classroom) {
+            const classKey = `${slot.classroom}_${day}_${periodIndex}`;
+            
+            if (classAssignments.has(classKey)) {
+              const previousDivision = classDivisionMap.get(classKey)[0];
+              conflicts.push({
+                type: 'classroom_conflict',
+                severity: previousDivision === divisionName ? 'low' : 'medium',
+                description: `Classroom ${slot.classroom} is double-booked at period ${periodIndex + 1} on ${day}`,
+                details: {
+                  classroom: slot.classroom,
+                  day,
+                  period: periodIndex + 1,
+                  divisions: [previousDivision, divisionName],
+                  conflictType: previousDivision === divisionName ? 'same-division' : 'cross-division'
+                }
+              });
+            } else {
+              classAssignments.set(classKey, true);
+              classDivisionMap.set(classKey, [divisionName]);
+            }
+
+            // Check capacity
+            const classroom = classroomMap.get(String(slot.classroom).trim().toLowerCase());
+            const capacity = classroom?.capacity || 60;
+            const divisionSize = 50; 
+            if (capacity < divisionSize) {
+              conflicts.push({
+                type: 'classroom_capacity',
+                severity: 'medium',
+                description: `Classroom ${slot.classroom} capacity (${capacity}) is smaller than division size (${divisionSize}) for division ${divisionName}`,
+                details: {
+                  classroom: slot.classroom,
+                  capacity,
+                  division: divisionName,
+                  day,
+                  period: periodIndex + 1
+                }
+              });
+            }
           }
-          // ========================================================================
 
           // Check lab sessions
-          if ((slot.subject?.type === 'Lab' || slot.subject?.type === 'practical') && periodIndex < periods.length - 1) {
+          if (slot.subject && (slot.subject.type === 'Lab' || slot.subject.type === 'practical') && periodIndex < periods.length - 1) {
             const nextPeriod = periods[periodIndex + 1];
-            if (!nextPeriod || nextPeriod.subject?._id !== slot.subject._id) {
+            if (!nextPeriod || !nextPeriod.subject || String(nextPeriod.subject._id) !== String(slot.subject._id)) {
               conflicts.push({
                 type: 'lab_conflict',
                 severity: 'high',
-                description: `Lab session for ${slot.subject?.name || 'Unknown'} doesn't have consecutive periods on ${day}`,
+                description: `Lab session for ${slot.subject.name || 'Unknown'} doesn't have consecutive periods on ${day}`,
                 details: {
-                  subject: slot.subject?.name,
+                  subject: slot.subject.name,
                   division: divisionName,
                   day,
                   period: periodIndex + 1
@@ -1603,10 +1664,46 @@ static async generateTimetable(req, res, next) {
       });
     });
 
-    // 🆕 CHANGE 11: Sort conflicts by severity
+    // Check teacher overloading
+    teachersList.forEach(teacher => {
+      const tIdStr = String(teacher._id);
+      
+      const weeklyAssigned = teacherWeeklyWorkload.get(tIdStr) || 0;
+      const maxWeekly = teacher.maxWeeklyWorkload || 18;
+      if (weeklyAssigned > maxWeekly) {
+        conflicts.push({
+          type: 'teacher_overload',
+          severity: 'medium',
+          description: `Teacher ${teacher.name} weekly workload (${weeklyAssigned} periods) exceeds limit (${maxWeekly})`,
+          details: {
+            teacher: teacher.name,
+            weeklyAssigned,
+            limit: maxWeekly
+          }
+        });
+      }
+
+      for (const day of ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']) {
+        const dailyAssigned = teacherDailyWorkload.get(`${tIdStr}_${day}`) || 0;
+        const maxDaily = teacher.maxDailyWorkload || 4;
+        if (dailyAssigned > maxDaily) {
+          conflicts.push({
+            type: 'teacher_overload',
+            severity: 'low',
+            description: `Teacher ${teacher.name} daily workload on ${day} (${dailyAssigned} periods) exceeds limit (${maxDaily})`,
+            details: {
+              teacher: teacher.name,
+              day,
+              dailyAssigned,
+              limit: maxDaily
+            }
+          });
+        }
+      }
+    });
+
     const severityOrder = { high: 0, medium: 1, low: 2 };
     conflicts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
-    // ========================================================================
 
     return conflicts;
   }
