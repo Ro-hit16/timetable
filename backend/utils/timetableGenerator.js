@@ -1171,30 +1171,44 @@ export default class GeneticAlgorithm {
     this.periodsPerDay = 6;
     
     this.penalties = {
-      // Hard constraint penalties (must never happen)
+      // ── Hard constraints (catastrophic — must never happen) ───────────────
       TEACHER_CLASH:     -15000,
       ROOM_CLASH:        -15000,
       UNAVAILABLE_SLOT:  -10000,
 
-      // Soft constraint penalties
-      TEACHER_OVERLOAD:  -1000,
-      CAPACITY_CLASH:    -1000,
-      WORKLOAD_DEVIATION: -500,
-      SUBJECT_OVERLOAD:   -30,
-      LAB_NOT_CONSECUTIVE: -120,
-      LAB_WRONG_SLOT:      -80,
-      UNWANTED_FREE:       -15,  // internal gap penalty (not trailing)
+      // ── Soft constraint penalties ─────────────────────────────────────────
+      TEACHER_OVERLOAD:       -1000,
+      CAPACITY_CLASH:         -1000,
+      WORKLOAD_DEVIATION:     -800,  // per missing/extra period vs target
+      SUBJECT_OVERLOAD:       -60,   // >2 occurrences of same subject per day
+      LAB_NOT_CONSECUTIVE:    -200,
+      LAB_WRONG_SLOT:         -80,
+      UNWANTED_FREE:          -20,   // internal gap between lectures
 
-      // Reward bonuses
-      PREFERRED_SLOT:            15,
-      FILLED_SLOT:                5,
-      BALANCED_DISTRIBUTION:     20,
-      VARIETY_BONUS:             25,  // ≥4 unique subjects per day
-      LAB_PAIR_REWARD:           60,  // correctly placed consecutive lab pair
-      TEACHER_UTILISATION_REWARD: 3,  // per period a teacher is actively teaching
-      ROOM_UTILISATION_REWARD:    2,  // per unique room-period used without clash
-      WORKLOAD_MATCH_BONUS:      50,  // exact weekly target hit per subject
-      TEACHER_LOAD_BALANCE_BONUS: 30  // teacher load within 60-100% of limit
+      // ── Phase 2: Distribution & Spacing penalties ─────────────────────────
+      SUBJECT_CONSEC_DAY:     -150,  // same subject on back-to-back days
+      TEACHER_CONSEC_LECTURE: -25,   // each consecutive lecture beyond 2 in a row
+      TEACHER_IDLE_GAP:       -30,   // gap (null) between teacher's lectures same day
+      LAB_SAME_WEEK_CLUSTER:  -80,   // lab scheduled on adjacent days same week
+      ROOM_INCONSISTENCY:     -5,    // different room for same subject across days
+
+      // ── Reward bonuses ────────────────────────────────────────────────────
+      PREFERRED_SLOT:             15,
+      FILLED_SLOT:                 5,
+      BALANCED_DISTRIBUTION:      20,
+      VARIETY_BONUS:              25,  // ≥4 distinct subjects per day
+      LAB_PAIR_REWARD:            60,  // correctly placed consecutive lab pair
+      TEACHER_UTILISATION_REWARD:  3,  // per period actively teaching
+      ROOM_UTILISATION_REWARD:     2,  // unique room-period used without clash
+      WORKLOAD_MATCH_BONUS:       80,  // exact weekly target hit per subject
+      TEACHER_LOAD_BALANCE_BONUS: 30,  // teacher load 60–100% of weekly limit
+
+      // ── Phase 2: Distribution & Spacing rewards ───────────────────────────
+      SUBJECT_SPREAD_BONUS:       40,  // subject well-spread across week (no cluster)
+      TEACHER_COMPACT_BONUS:      20,  // teacher's lectures are compact (no idle gaps)
+      ROOM_CONSISTENT_BONUS:       8,  // same room used for same subject across days
+      LAB_SPREAD_BONUS:           35,  // lab days are non-adjacent in the week
+      DIVISION_FAIRNESS_BONUS:    50   // all divisions have similar schedule density
     };
   }
 
@@ -1518,40 +1532,80 @@ export default class GeneticAlgorithm {
     const workload = this.getTeacherWorkload(schedule);
     const divisionSubjectCounts = {};
 
+    // ── Phase 2: Weekly tracking maps (per-division) ────────────────────────
+    // subjectDayMap[div][subjectId] = Set of day-indices where subject appears
+    // roomSubjectMap[div][subjectId] = most-common roomId used for that subject
+    // teacherDaySlots[teacherId][day] = sorted array of period indices
+    const subjectDayMap    = {};  // div -> subId -> Set<dayIndex>
+    const roomSubjectMap   = {};  // div -> subId -> Map<roomId, count>
+    const teacherDaySlots  = {};  // teacherId -> day -> [periodIndex]
+    const divisionFill     = {};  // div -> total filled periods (for fairness)
+
+    // Pre-populate teacher slot index (needed for consecutive/gap checks)
+    for (const division in schedule) {
+      for (let di = 0; di < this.days.length; di++) {
+        const day     = this.days[di];
+        const daySlots = schedule[division][day] || [];
+        daySlots.forEach((slot, pi) => {
+          if (!slot?.teacher?._id) return;
+          const tId = String(slot.teacher._id);
+          if (!teacherDaySlots[tId])       teacherDaySlots[tId]       = {};
+          if (!teacherDaySlots[tId][day])  teacherDaySlots[tId][day]  = [];
+          teacherDaySlots[tId][day].push(pi);
+        });
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     for (const division in schedule) {
       divisionSubjectCounts[division] = new Map();
+      subjectDayMap[division]         = {};
+      roomSubjectMap[division]        = {};
+      divisionFill[division]          = 0;
 
-      for (const day of this.days) {
+      for (let di = 0; di < this.days.length; di++) {
+        const day     = this.days[di];
         const daySlots = schedule[division][day] || [];
-        const subjectDayCount = new Map();
-        let gapOpen = false; // track gaps (null between filled slots)
+        const subjectDayCount = new Map();  // occurrences this day
+        let gapOpen = false;
 
         for (let i = 0; i < daySlots.length; i++) {
           const slot = daySlots[i];
 
           if (!slot) {
-            // Only penalise true internal gaps (after a filled slot, before another)
+            // Internal gap penalty (only if between two filled slots)
             const hasAfter = daySlots.slice(i + 1).some(s => s !== null);
             if (gapOpen && hasAfter) score += this.penalties.UNWANTED_FREE;
             continue;
           }
 
-          gapOpen = true; // a filled slot was seen
+          gapOpen = true;
           score += this.penalties.FILLED_SLOT;
+          divisionFill[division]++;
 
           const subjectId   = slot.subject?._id;
           const subjectType = slot.subject?.type;
           const teacherId   = slot.teacher?._id;
           const roomId      = slot.classroom?._id;
+          const sIdStr      = subjectId ? String(subjectId) : null;
 
-          // ── Subject distribution tracking ────────────────────────────────
-          if (subjectId) {
-            const sIdStr = String(subjectId);
+          // ── Subject per-day count ─────────────────────────────────────────
+          if (sIdStr) {
             subjectDayCount.set(sIdStr, (subjectDayCount.get(sIdStr) || 0) + 1);
             divisionSubjectCounts[division].set(sIdStr, (divisionSubjectCounts[division].get(sIdStr) || 0) + 1);
 
-            if (subjectDayCount.get(sIdStr) > 2) {
-              score += this.penalties.SUBJECT_OVERLOAD;
+            // Penalty: >2 of same subject in one day
+            if (subjectDayCount.get(sIdStr) > 2) score += this.penalties.SUBJECT_OVERLOAD;
+
+            // Track which days this subject appears (for spread analysis)
+            if (!subjectDayMap[division][sIdStr]) subjectDayMap[division][sIdStr] = new Set();
+            subjectDayMap[division][sIdStr].add(di);
+
+            // Track room usage for consistency reward
+            if (roomId) {
+              if (!roomSubjectMap[division][sIdStr]) roomSubjectMap[division][sIdStr] = new Map();
+              const rStr = String(roomId);
+              roomSubjectMap[division][sIdStr].set(rStr, (roomSubjectMap[division][sIdStr].get(rStr) || 0) + 1);
             }
           }
 
@@ -1564,7 +1618,7 @@ export default class GeneticAlgorithm {
               globalTeacherSlots.set(teacherKey, { division, day, period: i });
             }
 
-            // Teacher availability
+            // Teacher availability check
             const tObj = teacherObjMap.get(String(teacherId));
             if (tObj?.unavailableSlots?.length) {
               const unavail = tObj.unavailableSlots.some(
@@ -1573,8 +1627,7 @@ export default class GeneticAlgorithm {
               if (unavail) score += this.penalties.UNAVAILABLE_SLOT;
             }
 
-            // ── Soft reward: teacher utilisation ────────────────────────
-            // Give a small bonus when teacher is actively teaching (utilised)
+            // Utilisation reward
             score += this.penalties.TEACHER_UTILISATION_REWARD;
           }
 
@@ -1585,12 +1638,10 @@ export default class GeneticAlgorithm {
               score += this.penalties.ROOM_CLASH;
             } else {
               globalRoomSlots.set(roomKey, { division, day, period: i });
-
-              // ── Soft reward: room utilisation ──────────────────────────
               score += this.penalties.ROOM_UTILISATION_REWARD;
             }
 
-            // Room capacity
+            // Room capacity check
             const roomObj  = classroomObjMap.get(String(roomId));
             const capacity = roomObj?.capacity || 60;
             if (capacity < 50) score += this.penalties.CAPACITY_CLASH;
@@ -1606,69 +1657,174 @@ export default class GeneticAlgorithm {
               String(nextSlot.subject?._id) === String(subjectId) &&
               String(nextSlot.teacher?._id) === String(teacherId);
 
-            if (!isConsecutive) {
-              score += this.penalties.LAB_NOT_CONSECUTIVE;
-            } else {
-              // ── Soft reward: consecutive lab ──────────────────────────
-              score += this.penalties.LAB_PAIR_REWARD;
-            }
+            if (!isConsecutive) score += this.penalties.LAB_NOT_CONSECUTIVE;
+            else                score += this.penalties.LAB_PAIR_REWARD;
 
             if (i === 0)      score += this.penalties.PREFERRED_SLOT * 3;
             else if (i === 2) score += this.penalties.PREFERRED_SLOT * 2;
             else if (i === 4) score += this.penalties.PREFERRED_SLOT;
           }
 
-          // Preferred slot bonuses for theory / tutorial
-          if (subjectType === 'theory' && i >= 1 && i <= 4) score += this.penalties.PREFERRED_SLOT;
-          if (subjectType === 'tutorial' && i >= 4)         score += this.penalties.PREFERRED_SLOT * 3;
+          // Preferred slot bonuses
+          if (subjectType === 'theory'   && i >= 1 && i <= 4) score += this.penalties.PREFERRED_SLOT;
+          if (subjectType === 'tutorial' && i >= 4)           score += this.penalties.PREFERRED_SLOT * 3;
         }
 
         // Daily density bonus
-        const filledSlots = daySlots.filter(s => s !== null).length;
-        if (filledSlots >= 5) score += this.penalties.BALANCED_DISTRIBUTION;
+        const filledCount = daySlots.filter(s => s !== null).length;
+        if (filledCount >= 5) score += this.penalties.BALANCED_DISTRIBUTION;
 
-        // Variety bonus: reward having ≥4 distinct subjects in a day
+        // Daily variety bonus
         const uniqueSubjectsToday = new Set(
           daySlots.filter(s => s?.subject?._id).map(s => String(s.subject._id))
         ).size;
         if (uniqueSubjectsToday >= 4) score += this.penalties.VARIETY_BONUS;
       }
 
-      // ── Weekly workload deviation per subject ────────────────────────────
+      // ── Weekly subject workload deviation ────────────────────────────────
       for (const subject of subjects) {
+        const sId       = String(subject._id);
         const target    = this.getLecturePerWeek(subject);
-        const scheduled = divisionSubjectCounts[division].get(String(subject._id)) || 0;
+        const scheduled = divisionSubjectCounts[division].get(sId) || 0;
         if (scheduled !== target) {
           score += Math.abs(scheduled - target) * this.penalties.WORKLOAD_DEVIATION;
         } else {
-          // Exact match bonus
           score += this.penalties.WORKLOAD_MATCH_BONUS;
+        }
+      }
+
+      // ── Phase 2A: Subject consecutive-day spacing ────────────────────────
+      // Penalise if same subject appears on two adjacent days.
+      // Reward if appearances are spread evenly (no two days adjacent).
+      for (const subject of subjects) {
+        const sId  = String(subject._id);
+        const days = subjectDayMap[division][sId];
+        if (!days || days.size < 2) continue;
+
+        const sortedDays = [...days].sort((a, b) => a - b);
+        let hasConsecDay    = false;
+        let isWellSpread    = true;
+        for (let k = 0; k < sortedDays.length - 1; k++) {
+          if (sortedDays[k + 1] - sortedDays[k] === 1) {
+            hasConsecDay = true;
+            isWellSpread = false;
+            score += this.penalties.SUBJECT_CONSEC_DAY;
+          }
+        }
+        if (isWellSpread) score += this.penalties.SUBJECT_SPREAD_BONUS;
+      }
+
+      // ── Phase 2B: Room consistency reward ────────────────────────────────
+      // Reward when the same room is consistently used for a subject across days.
+      for (const sId of Object.keys(roomSubjectMap[division] || {})) {
+        const roomCounts = roomSubjectMap[division][sId];
+        if (!roomCounts || roomCounts.size === 0) continue;
+        const total = [...roomCounts.values()].reduce((a, b) => a + b, 0);
+        const maxUse = Math.max(...roomCounts.values());
+        const consistencyRatio = maxUse / total;
+        if (consistencyRatio >= 0.8) {
+          score += this.penalties.ROOM_CONSISTENT_BONUS;
+        } else if (consistencyRatio < 0.5) {
+          score += this.penalties.ROOM_INCONSISTENCY * (total - maxUse);
         }
       }
     }
 
-    // ── Teacher weekly/daily workload constraints ────────────────────────────
-    for (const teacher of teachers) {
-      const tIdStr = String(teacher._id);
-      const weeklyAssigned = workload.weekly.get(tIdStr) || 0;
-      const maxWeekly      = teacher.maxWeeklyWorkload || 18;
+    // ── Phase 2C: Teacher consecutive-lecture & idle-gap penalties ───────────
+    // For each teacher+day, look at the sorted period indices they teach.
+    // Penalise 3+ consecutive periods, and internal gaps.
+    for (const teacherId of Object.keys(teacherDaySlots)) {
+      const teacher   = teacherObjMap.get(teacherId);
+      const maxWeekly = teacher?.maxWeeklyWorkload || 18;
+      const maxDaily  = teacher?.maxDailyWorkload  || 4;
 
+      for (const day of this.days) {
+        const periods = (teacherDaySlots[teacherId]?.[day] || []).sort((a, b) => a - b);
+        if (periods.length === 0) continue;
+
+        // Idle gap penalty: null period between two teaching periods on same day
+        for (let k = 0; k < periods.length - 1; k++) {
+          const gap = periods[k + 1] - periods[k];
+          if (gap > 1) {
+            // Gap of 2+ means ≥1 free period in between
+            score += (gap - 1) * this.penalties.TEACHER_IDLE_GAP;
+          }
+        }
+
+        // Consecutive lecture penalty: runs of 3+ are tiring
+        let runLength = 1;
+        for (let k = 1; k < periods.length; k++) {
+          if (periods[k] - periods[k - 1] === 1) {
+            runLength++;
+            if (runLength > 2) {
+              // Each period beyond 2 consecutive is penalised
+              score += this.penalties.TEACHER_CONSEC_LECTURE;
+            }
+          } else {
+            runLength = 1;
+          }
+        }
+
+        // Compact bonus: all periods are in one contiguous block
+        if (periods.length > 1) {
+          const span = periods[periods.length - 1] - periods[0] + 1;
+          if (span === periods.length) {
+            score += this.penalties.TEACHER_COMPACT_BONUS;
+          }
+        }
+      }
+
+      // Teacher weekly/daily workload constraints
+      const tIdStr         = String(teacherId);
+      const weeklyAssigned = workload.weekly.get(tIdStr) || 0;
       if (weeklyAssigned > maxWeekly) {
         score += (weeklyAssigned - maxWeekly) * this.penalties.TEACHER_OVERLOAD;
       } else if (weeklyAssigned > 0) {
-        // Reward balanced utilisation: closer to ideal load = higher bonus
         const utilRatio = weeklyAssigned / maxWeekly;
-        if (utilRatio >= 0.6 && utilRatio <= 1.0) {
-          score += this.penalties.TEACHER_LOAD_BALANCE_BONUS;
-        }
+        if (utilRatio >= 0.6 && utilRatio <= 1.0) score += this.penalties.TEACHER_LOAD_BALANCE_BONUS;
       }
 
       for (const day of this.days) {
         const dailyAssigned = workload.daily.get(`${tIdStr}_${day}`) || 0;
-        const maxDaily      = teacher.maxDailyWorkload || 4;
         if (dailyAssigned > maxDaily) {
           score += (dailyAssigned - maxDaily) * this.penalties.TEACHER_OVERLOAD;
         }
+      }
+    }
+
+    // ── Phase 2D: Lab spread-across-days reward ───────────────────────────────
+    // Labs should be on non-adjacent days (e.g. Mon + Wed, not Mon + Tue).
+    for (const division in schedule) {
+      for (const subject of subjects) {
+        if (subject.type !== 'practical' && subject.type !== 'lab') continue;
+        const sId  = String(subject._id);
+        const days = subjectDayMap[division]?.[sId];
+        if (!days || days.size < 2) continue;
+        const sortedDays = [...days].sort((a, b) => a - b);
+        let labClustered = false;
+        for (let k = 0; k < sortedDays.length - 1; k++) {
+          if (sortedDays[k + 1] - sortedDays[k] === 1) {
+            labClustered = true;
+            score += this.penalties.LAB_SAME_WEEK_CLUSTER;
+          }
+        }
+        if (!labClustered) score += this.penalties.LAB_SPREAD_BONUS;
+      }
+    }
+
+    // ── Phase 2E: Division fairness normalization ─────────────────────────────
+    // Penalise large variance in slot fill across divisions.
+    const divKeys   = Object.keys(divisionFill);
+    if (divKeys.length > 1) {
+      const fills    = divKeys.map(d => divisionFill[d]);
+      const avg      = fills.reduce((a, b) => a + b, 0) / fills.length;
+      const variance = fills.reduce((s, f) => s + Math.pow(f - avg, 2), 0) / fills.length;
+      if (variance <= 4) {
+        // Very balanced across divisions
+        score += this.penalties.DIVISION_FAIRNESS_BONUS * divKeys.length;
+      } else {
+        // Penalise proportional to variance
+        score -= Math.sqrt(variance) * 10;
       }
     }
 
@@ -1734,11 +1890,12 @@ export default class GeneticAlgorithm {
   }
 
   /**
-   * Multi-operator mutation with 4 targeted strategies:
-   *  Type 1 (35%): Swap two periods within the same division/day
-   *  Type 2 (30%): Cross-day swap within same division (improves weekly distribution)
-   *  Type 3 (25%): Cross-division room swap for same period/day (resolves room clashes)
-   *  Type 4 (10%): Nullify a random non-lab slot (exploration)
+   * Multi-operator mutation with 5 targeted strategies:
+   *  Type 1 (30%): Intra-day swap within same division
+   *  Type 2 (28%): Cross-day swap within same division (improves weekly spread)
+   *  Type 3 (20%): Cross-division room swap (resolves room clashes)
+   *  Type 4 (12%): Subject spacing repair — moves a subject off a consecutive-day pair
+   *  Type 5 (10%): Nullify one random non-lab slot (exploration)
    */
   mutate(schedule, overrideMutationRate = null) {
     const rate = overrideMutationRate ?? this.mutationRate;
@@ -1750,52 +1907,50 @@ export default class GeneticAlgorithm {
     const divisions = Object.keys(mutated);
     if (!divisions.length) return mutated;
 
-    const r = Math.random();
-    const isLab = (slot) => slot?.subject?.type === 'practical' || slot?.subject?.type === 'lab';
+    const r      = Math.random();
+    const isLab  = (slot) => slot?.subject?.type === 'practical' || slot?.subject?.type === 'lab';
+    const pickRand = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-    if (r < 0.35) {
-      // ── Type 1: Intra-day swap within same division ─────────────────────
-      const division = divisions[Math.floor(Math.random() * divisions.length)];
-      const day      = this.days[Math.floor(Math.random() * this.days.length)];
+    if (r < 0.30) {
+      // ── Type 1: Intra-day swap ───────────────────────────────────────────
+      const division = pickRand(divisions);
+      const day      = pickRand(this.days);
       const p1 = Math.floor(Math.random() * this.periodsPerDay);
       const p2 = Math.floor(Math.random() * this.periodsPerDay);
-
-      if (mutated[division]?.[day] && !isLab(mutated[division][day][p1]) && !isLab(mutated[division][day][p2])) {
+      if (mutated[division]?.[day] &&
+          !isLab(mutated[division][day][p1]) &&
+          !isLab(mutated[division][day][p2])) {
         const temp = mutated[division][day][p1];
         mutated[division][day][p1] = mutated[division][day][p2];
         mutated[division][day][p2] = temp;
       }
 
-    } else if (r < 0.65) {
-      // ── Type 2: Cross-day swap within same division (improve distribution)
-      const division = divisions[Math.floor(Math.random() * divisions.length)];
-      const day1 = this.days[Math.floor(Math.random() * this.days.length)];
-      const day2 = this.days[Math.floor(Math.random() * this.days.length)];
+    } else if (r < 0.58) {
+      // ── Type 2: Cross-day swap within same division ──────────────────────
+      const division = pickRand(divisions);
+      const day1 = pickRand(this.days);
+      const day2 = pickRand(this.days);
       if (day1 !== day2) {
-        const p1 = Math.floor(Math.random() * this.periodsPerDay);
-        const p2 = Math.floor(Math.random() * this.periodsPerDay);
+        const p1    = Math.floor(Math.random() * this.periodsPerDay);
+        const p2    = Math.floor(Math.random() * this.periodsPerDay);
         const slot1 = mutated[division]?.[day1]?.[p1];
         const slot2 = mutated[division]?.[day2]?.[p2];
-        // Only swap non-lab slots to avoid breaking pairs
         if (slot1 && slot2 && !isLab(slot1) && !isLab(slot2)) {
           mutated[division][day1][p1] = { ...slot2, period: p1 + 1 };
           mutated[division][day2][p2] = { ...slot1, period: p2 + 1 };
         }
       }
 
-    } else if (r < 0.90) {
-      // ── Type 3: Cross-division room swap (resolves room clashes) ─────────
+    } else if (r < 0.78) {
+      // ── Type 3: Cross-division room swap ─────────────────────────────────
       if (divisions.length >= 2) {
-        const div1 = divisions[Math.floor(Math.random() * divisions.length)];
-        let div2   = divisions[Math.floor(Math.random() * divisions.length)];
+        const div1 = pickRand(divisions);
+        let div2   = pickRand(divisions);
         if (div1 === div2) div2 = divisions[(divisions.indexOf(div1) + 1) % divisions.length];
-
-        const day    = this.days[Math.floor(Math.random() * this.days.length)];
+        const day    = pickRand(this.days);
         const period = Math.floor(Math.random() * this.periodsPerDay);
         const slot1  = mutated[div1]?.[day]?.[period];
         const slot2  = mutated[div2]?.[day]?.[period];
-
-        // Swap only the classroom assignment (not teacher/subject) to try resolving room clash
         if (slot1 && slot2 && !isLab(slot1) && !isLab(slot2)) {
           const room1 = slot1.classroom;
           mutated[div1][day][period] = { ...slot1, classroom: slot2.classroom };
@@ -1803,10 +1958,67 @@ export default class GeneticAlgorithm {
         }
       }
 
+    } else if (r < 0.90) {
+      // ── Type 4: Subject spacing repair ───────────────────────────────────
+      // Find a subject that appears on two adjacent days and move one instance
+      // to a non-adjacent day that currently has a free slot.
+      const division = pickRand(divisions);
+
+      // Build subject->days map for this division
+      const subDays = {};
+      for (let di = 0; di < this.days.length; di++) {
+        const day     = this.days[di];
+        const daySlots = mutated[division]?.[day] || [];
+        daySlots.forEach((slot, pi) => {
+          if (!slot?.subject?._id || isLab(slot)) return;
+          const sId = String(slot.subject._id);
+          if (!subDays[sId]) subDays[sId] = [];
+          subDays[sId].push({ di, pi, day });
+        });
+      }
+
+      // Find a subject with a consecutive-day violation
+      for (const [sId, entries] of Object.entries(subDays)) {
+        if (entries.length < 2) continue;
+        const sorted = entries.sort((a, b) => a.di - b.di);
+        for (let k = 0; k < sorted.length - 1; k++) {
+          if (sorted[k + 1].di - sorted[k].di !== 1) continue;
+
+          // Found consecutive days — try to move the second occurrence to a gap day
+          const victim     = sorted[k + 1];
+          const usedDayIdx = new Set(entries.map(e => e.di));
+          const freeDays   = this.days
+            .map((d, idx) => ({ d, idx }))
+            .filter(({ idx }) => !usedDayIdx.has(idx) ||
+              (idx !== sorted[k].di && idx !== victim.di))
+            .filter(({ d, idx }) => {
+              // Must be non-adjacent to sorted[k].di
+              return Math.abs(idx - sorted[k].di) > 1;
+            });
+
+          if (freeDays.length === 0) break;
+          const target = pickRand(freeDays);
+
+          // Find a free slot in the target day
+          const targetSlots = mutated[division]?.[target.d] || [];
+          const freeSlot = targetSlots.findIndex(s => s === null);
+          if (freeSlot === -1) break;
+
+          // Move the slot
+          mutated[division][target.d][freeSlot] = {
+            ...mutated[division][victim.day][victim.pi],
+            period: freeSlot + 1
+          };
+          mutated[division][victim.day][victim.pi] = null;
+          break;
+        }
+        break; // process one violation per mutation call
+      }
+
     } else {
-      // ── Type 4: Nullify one random non-lab slot (exploration) ─────────────
-      const division = divisions[Math.floor(Math.random() * divisions.length)];
-      const day      = this.days[Math.floor(Math.random() * this.days.length)];
+      // ── Type 5: Nullify one random non-lab slot (exploration) ────────────
+      const division = pickRand(divisions);
+      const day      = pickRand(this.days);
       const period   = Math.floor(Math.random() * this.periodsPerDay);
       if (mutated[division]?.[day] && !isLab(mutated[division][day][period])) {
         mutated[division][day][period] = null;
@@ -1952,29 +2164,54 @@ export default class GeneticAlgorithm {
     const teacherSlotCheck = new Map();
     const roomSlotCheck    = new Map();
 
+    // Phase 2 metrics
+    let subjectConsecDayViolations = 0;
+    let teacherIdleGaps            = 0;
+    let teacherConsecRuns          = 0;   // count of 3+ consecutive lecture runs
+    const divFills                 = [];
+    const subjectDayMapM           = {};  // subId -> Set<dayIdx> (across all divs)
+    const teacherDaySlotsM         = {};  // teacherId -> day -> [periodIdx]
+
     for (const division in schedule) {
-      for (const day of this.days) {
+      subjectDayMapM[division] = {};
+      let divFill = 0;
+
+      for (let di = 0; di < this.days.length; di++) {
+        const day     = this.days[di];
         const daySlots = schedule[division][day] || [];
-        totalSlots += daySlots.length;
-        filledSlots += daySlots.filter(s => s !== null).length;
+        totalSlots  += daySlots.length;
+        const dayFill = daySlots.filter(s => s !== null).length;
+        filledSlots += dayFill;
+        divFill     += dayFill;
 
         for (let i = 0; i < daySlots.length; i++) {
           const slot = daySlots[i];
           if (!slot) continue;
 
-          if (slot.teacher?._id) usedTeachers.add(String(slot.teacher._id));
-          if (slot.classroom?._id) usedRooms.add(String(slot.classroom._id));
-
-          // Clash detection
           if (slot.teacher?._id) {
+            usedTeachers.add(String(slot.teacher._id));
+            // Clash
             const tk = `${slot.teacher._id}_${day}_${i}`;
             if (teacherSlotCheck.has(tk)) hardClashes++;
             else teacherSlotCheck.set(tk, true);
+            // For teacher compactness
+            const tId = String(slot.teacher._id);
+            if (!teacherDaySlotsM[tId])      teacherDaySlotsM[tId]      = {};
+            if (!teacherDaySlotsM[tId][day]) teacherDaySlotsM[tId][day] = [];
+            teacherDaySlotsM[tId][day].push(i);
           }
           if (slot.classroom?._id) {
+            usedRooms.add(String(slot.classroom._id));
             const rk = `${slot.classroom._id}_${day}_${i}`;
             if (roomSlotCheck.has(rk)) hardClashes++;
             else roomSlotCheck.set(rk, true);
+          }
+
+          // Subject day spread tracking
+          if (slot.subject?._id) {
+            const sId = String(slot.subject._id);
+            if (!subjectDayMapM[division][sId]) subjectDayMapM[division][sId] = new Set();
+            subjectDayMapM[division][sId].add(di);
           }
 
           // Lab pairs
@@ -1983,31 +2220,82 @@ export default class GeneticAlgorithm {
             labPairsTotal++;
             const next = daySlots[i + 1];
             if (next &&
-                String(next.subject?._id) === String(slot.subject._id) &&
-                String(next.teacher?._id) === String(slot.teacher?._id)) {
+                String(next.subject?._id)  === String(slot.subject._id) &&
+                String(next.teacher?._id)  === String(slot.teacher?._id)) {
               labPairsCorrect++;
             }
           }
         }
       }
+      divFills.push(divFill);
+
+      // Subject consecutive-day violations for this division
+      for (const sId of Object.keys(subjectDayMapM[division])) {
+        const days = [...subjectDayMapM[division][sId]].sort((a, b) => a - b);
+        for (let k = 0; k < days.length - 1; k++) {
+          if (days[k + 1] - days[k] === 1) subjectConsecDayViolations++;
+        }
+      }
     }
 
-    const teacherUtil   = teacherIds.size   > 0 ? Math.round((usedTeachers.size / teacherIds.size)   * 100) : 0;
-    const classroomUtil = classroomIds.size > 0 ? Math.round((usedRooms.size   / classroomIds.size)   * 100) : 0;
-    const labUtil       = labPairsTotal     > 0 ? Math.round((labPairsCorrect   / labPairsTotal)       * 100) : 100;
-    const slotUtil      = totalSlots        > 0 ? Math.round((filledSlots       / totalSlots)           * 100) : 0;
+    // Teacher idle gaps & consecutive runs
+    for (const tId of Object.keys(teacherDaySlotsM)) {
+      for (const day of this.days) {
+        const periods = (teacherDaySlotsM[tId]?.[day] || []).sort((a, b) => a - b);
+        if (periods.length < 2) continue;
+        // Gaps
+        for (let k = 0; k < periods.length - 1; k++) {
+          if (periods[k + 1] - periods[k] > 1) teacherIdleGaps++;
+        }
+        // Consecutive runs of 3+
+        let run = 1;
+        for (let k = 1; k < periods.length; k++) {
+          if (periods[k] - periods[k - 1] === 1) {
+            run++;
+            if (run === 3) teacherConsecRuns++;
+          } else {
+            run = 1;
+          }
+        }
+      }
+    }
 
-    // Normalised quality score 0–100
-    const qualityScore  = Math.round(
-      (teacherUtil * 0.25) + (classroomUtil * 0.20) + (labUtil * 0.25) + (slotUtil * 0.20) + (hardClashes === 0 ? 10 : 0)
-    );
+    // Division fairness
+    const avgFill      = divFills.length ? divFills.reduce((a, b) => a + b, 0) / divFills.length : 0;
+    const fillVariance = divFills.length ? divFills.reduce((s, f) => s + Math.pow(f - avgFill, 2), 0) / divFills.length : 0;
+    const divFairnessScore = Math.max(0, 100 - Math.round(Math.sqrt(fillVariance) * 10));
+
+    const teacherUtil      = teacherIds.size   > 0 ? Math.round((usedTeachers.size / teacherIds.size)   * 100) : 0;
+    const classroomUtil    = classroomIds.size > 0 ? Math.round((usedRooms.size   / classroomIds.size)   * 100) : 0;
+    const labUtil          = labPairsTotal     > 0 ? Math.round((labPairsCorrect   / labPairsTotal)       * 100) : 100;
+    const slotUtil         = totalSlots        > 0 ? Math.round((filledSlots       / totalSlots)           * 100) : 0;
+    const subjectSpread    = Math.max(0, 100 - subjectConsecDayViolations * 10);
+    const teacherCompact   = Math.max(0, 100 - teacherIdleGaps * 8 - teacherConsecRuns * 5);
+
+    // Weighted quality score 0–100 (Phase 2 formula)
+    const qualityScore = Math.min(100, Math.round(
+      (teacherUtil     * 0.20) +
+      (classroomUtil   * 0.15) +
+      (labUtil         * 0.20) +
+      (slotUtil        * 0.15) +
+      (subjectSpread   * 0.15) +
+      (teacherCompact  * 0.10) +
+      (divFairnessScore * 0.05) +
+      (hardClashes === 0 ? 10 : 0)
+    ));
 
     return {
+      // Core utilisation
       teacherUtilization:   { used: usedTeachers.size,  total: teacherIds.size,   percentage: teacherUtil },
       classroomUtilization: { used: usedRooms.size,     total: classroomIds.size, percentage: classroomUtil },
       labUtilization:       { correct: labPairsCorrect, total: labPairsTotal,     percentage: labUtil },
       slotUtilization:      { filled: filledSlots,      total: totalSlots,        percentage: slotUtil },
       hardClashes,
+      // Phase 2 soft-constraint metrics
+      subjectSpread:        { violations: subjectConsecDayViolations, score: subjectSpread },
+      teacherCompactness:   { idleGaps: teacherIdleGaps, consecRuns: teacherConsecRuns, score: teacherCompact },
+      divisionFairness:     { fillVariance: Math.round(fillVariance * 10) / 10, score: divFairnessScore },
+      // Overall
       qualityScore
     };
   }
