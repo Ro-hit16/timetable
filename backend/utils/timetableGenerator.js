@@ -1391,8 +1391,19 @@ export default class GeneticAlgorithm {
               const dayCount  = daySubjectCount.get(sId) || 0;
               const totalCount = divisionSubjectCount.get(sId) || 0;
               const target    = this.getLecturePerWeek(lab);
+              // NOTE: `target` from getLecturePerWeek() is expressed in LAB
+              // SESSIONS per week (e.g. 2 sessions), while `totalCount` /
+              // `dayCount` accumulate in PERIODS (each lab session adds 2,
+              // since a lab occupies 2 consecutive periods). Comparing
+              // `totalCount + 2 > target` mixed periods against sessions, so
+              // with the common default target of 2 (sessions), scheduling
+              // stopped after a single session (2 periods >= 2), chronically
+              // under-allocating labs to 1 pair instead of the intended
+              // number of sessions. Multiplying target by 2 converts it to
+              // the same periods unit that totalCount uses.
+              const targetPeriods = target * 2;
 
-              if (dayCount > 0 || totalCount + 2 > target) continue;
+              if (dayCount > 0 || totalCount + 2 > targetPeriods) continue;
 
               const teacher = getTeacher(lab._id, day, p);
               const room    = getRoom(lab.type, day, p);
