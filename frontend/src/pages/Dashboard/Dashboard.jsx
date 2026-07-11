@@ -14,7 +14,10 @@ import {
   RefreshCw,
   ChevronRight,
   Eye,
-  MoreHorizontal
+  MoreHorizontal,
+  ArrowUp,
+  ArrowDown,
+  CalendarClock
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -161,19 +164,20 @@ const Dashboard = () => {
   };
 
   const StatCard = ({ title, value, icon: Icon, color, bgColor, trend }) => (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
+          <p className="text-3xl font-semibold text-slate-900">{value}</p>
           {trend && (
-            <div className={`flex items-center mt-2 text-sm ${trend.value > 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {trend.value > 0 ? '↑' : '↓'} {Math.abs(trend.value)}% {trend.label}
+            <div className={`flex items-center gap-1 mt-2 text-xs font-medium ${trend.value > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              {trend.value > 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+              {Math.abs(trend.value)}% {trend.label}
             </div>
           )}
         </div>
-        <div className={`p-3 rounded-xl ${bgColor} shadow-inner`}>
-          <Icon className={`h-6 w-6 ${color}`} />
+        <div className={`p-3 rounded-xl ${bgColor}`}>
+          <Icon className={`h-5 w-5 ${color}`} />
         </div>
       </div>
     </div>
@@ -182,37 +186,36 @@ const Dashboard = () => {
   const ActivityItem = ({ activity }) => {
     const getActivityIcon = (type) => {
       switch (type) {
-        case 'teacher': return <GraduationCap className="h-5 w-5 text-green-500" />;
-        case 'timetable': return <Calendar className="h-5 w-5 text-blue-500" />;
-        case 'subject': return <BookOpen className="h-5 w-5 text-purple-500" />;
-        default: return <Clock className="h-5 w-5 text-gray-500" />;
+        case 'teacher': return <GraduationCap className="h-4.5 w-4.5 text-emerald-600" />;
+        case 'timetable': return <Calendar className="h-4.5 w-4.5 text-indigo-600" />;
+        case 'subject': return <BookOpen className="h-4.5 w-4.5 text-violet-600" />;
+        default: return <Clock className="h-4.5 w-4.5 text-slate-500" />;
       }
     };
 
     const getActivityColor = (type) => {
       switch (type) {
-        case 'teacher': return 'bg-green-100';
-        case 'timetable': return 'bg-blue-100';
-        case 'subject': return 'bg-purple-100';
-        default: return 'bg-gray-100';
+        case 'teacher': return 'bg-emerald-50';
+        case 'timetable': return 'bg-indigo-50';
+        case 'subject': return 'bg-violet-50';
+        default: return 'bg-slate-100';
       }
     };
 
     return (
-      <div className="flex items-start space-x-4 p-4 hover:bg-gray-50 rounded-lg transition-colors duration-200">
-        <div className={`p-2 rounded-lg ${getActivityColor(activity.type)}`}>
+      <div className="flex items-start gap-4 p-4 hover:bg-slate-50 rounded-lg transition-colors duration-200">
+        <div className={`p-2 rounded-lg shrink-0 ${getActivityColor(activity.type)}`}>
           {getActivityIcon(activity.type)}
         </div>
-        <div className="flex-1">
-          <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-          <p className="text-sm text-gray-600 mt-1">{activity.details}</p>
-          <p className="text-xs text-gray-400 mt-2 flex items-center">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-slate-800">{activity.action}</p>
+          <p className="text-sm text-slate-500 mt-0.5">{activity.details}</p>
+          <p className="text-xs text-slate-400 mt-2 flex items-center">
             <Clock className="h-3 w-3 mr-1" />
             {new Date(activity.createdAt).toLocaleString()}
-
           </p>
         </div>
-        <button className="text-gray-400 hover:text-gray-600">
+        <button className="text-slate-300 hover:text-slate-500 shrink-0">
           <MoreHorizontal className="h-4 w-4" />
         </button>
       </div>
@@ -222,12 +225,12 @@ const Dashboard = () => {
   const QuickActionButton = ({ icon: Icon, label, onClick, color }) => (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-gray-100 hover:shadow-md transition-all duration-200 hover:border-blue-200 group"
+      className="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-slate-200 hover:shadow-md transition-all duration-200 hover:border-indigo-200 group"
     >
-      <div className={`p-3 rounded-lg ${color} group-hover:scale-110 transition-transform duration-200 mb-2`}>
+      <div className={`p-3 rounded-lg ${color} group-hover:scale-105 transition-transform duration-200 mb-2`}>
         <Icon className="h-5 w-5 text-white" />
       </div>
-      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <span className="text-sm font-medium text-slate-700">{label}</span>
     </button>
   );
 
@@ -236,29 +239,32 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600 mt-2">Welcome back! Here's what's happening with your institution today.</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 mb-1">
+              Overview
+            </p>
+            <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">Dashboard</h1>
+            <p className="text-slate-500 mt-1">Welcome back — here's what's happening with your institution today.</p>
           </div>
-          <div className="flex items-center space-x-4 mt-4 md:mt-0">
+          <div className="flex items-center gap-3 mt-4 md:mt-0">
             <div className="relative">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search..."
-                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 bg-white"
               />
             </div>
-            <button className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
-              <Bell className="h-5 w-5 text-gray-600" />
+            <button className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition">
+              <Bell className="h-4.5 w-4.5 text-slate-500" />
             </button>
             <button
               onClick={fetchDashboardData}
-              className="flex items-center space-x-2 bg-white py-2 px-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 bg-white text-sm font-medium text-slate-700 py-2 px-3.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
             >
               <RefreshCw className="h-4 w-4" />
               <span>Refresh</span>
@@ -267,46 +273,46 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           <StatCard
             title="Total Subjects"
             value={stats.subjects}
             icon={BookOpen}
-            color="text-blue-600"
-            bgColor="bg-blue-100"
+            color="text-indigo-600"
+            bgColor="bg-indigo-50"
             trend={{ value: 12, label: 'from last month' }}
           />
           <StatCard
             title="Total Teachers"
             value={stats.teachers}
             icon={GraduationCap}
-            color="text-green-600"
-            bgColor="bg-green-100"
+            color="text-emerald-600"
+            bgColor="bg-emerald-50"
             trend={{ value: 5, label: 'from last month' }}
           />
           <StatCard
             title="Departments"
             value={stats.departments}
             icon={Building2}
-            color="text-orange-600"
-            bgColor="bg-orange-100"
+            color="text-amber-600"
+            bgColor="bg-amber-50"
           />
           <StatCard
             title="Active Timetables"
             value={stats.activeTimetables}
             icon={Calendar}
-            color="text-purple-600"
-            bgColor="bg-purple-100"
+            color="text-violet-600"
+            bgColor="bg-violet-50"
             trend={{ value: 8, label: 'from last week' }}
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-8">
           {/* Quick Actions */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-base font-semibold text-slate-900 mb-6 flex items-center">
+                <BarChart3 className="h-4.5 w-4.5 mr-2 text-indigo-600" />
                 Quick Actions
               </h3>
               <div className="grid grid-cols-2 gap-4">
@@ -314,25 +320,25 @@ const Dashboard = () => {
                   icon={Plus}
                   label="Add Teacher"
                   onClick={() => navigate('/teachers')}
-                  color="bg-green-500"
+                  color="bg-emerald-500"
                 />
                 <QuickActionButton
                   icon={BookOpen}
                   label="Add Subject"
                   onClick={() => navigate('/subjects')}
-                  color="bg-blue-500"
+                  color="bg-indigo-500"
                 />
                 <QuickActionButton
                   icon={Calendar}
                   label="Generate Timetable"
                   onClick={() => navigate('/timetables')}
-                  color="bg-purple-500"
+                  color="bg-violet-500"
                 />
                 <QuickActionButton
                   icon={Download}
                   label="Export Data"
                   onClick={() => toast.info('Export functionality will be implemented here')}
-                  color="bg-orange-500"
+                  color="bg-amber-500"
                 />
               </div>
             </div>
@@ -340,23 +346,23 @@ const Dashboard = () => {
 
           {/* Recent Activities */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Recent Activities</h3>
-                <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <h3 className="text-base font-semibold text-slate-900">Recent Activities</h3>
+                <button className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center">
                   View all <ChevronRight className="h-4 w-4 inline" />
                 </button>
               </div>
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-slate-100">
                 {recentActivities.length > 0 ? (
                   recentActivities.map(activity => (
                     <ActivityItem key={activity.id} activity={activity} />
                   ))
                 ) : (
-                  <div className="text-center py-12">
-                    <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">No recent activities</p>
-                    <p className="text-sm text-gray-400 mt-1">Activities will appear here as they happen</p>
+                  <div className="text-center py-14">
+                    <Calendar className="h-9 w-9 text-slate-300 mx-auto mb-3" />
+                    <p className="text-slate-600 text-sm font-medium">No recent activities</p>
+                    <p className="text-sm text-slate-400 mt-1">Activities will appear here as they happen</p>
                   </div>
                 )}
               </div>
@@ -365,28 +371,34 @@ const Dashboard = () => {
         </div>
 
         {/* Upcoming Events Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Upcoming Schedule</h3>
-            <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+            <h3 className="text-base font-semibold text-slate-900">Upcoming Schedule</h3>
+            <button className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center">
               View full calendar <ChevronRight className="h-4 w-4 inline" />
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <div className="text-sm font-medium text-gray-500">Mon, 12 Jun</div>
-              <div className="mt-2 font-semibold">Faculty Meeting</div>
-              <div className="text-sm text-gray-500 mt-1">10:00 AM - Conference Room</div>
+            <div className="p-4 border border-slate-200 rounded-lg hover:border-indigo-200 transition">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                <CalendarClock className="h-3.5 w-3.5" /> Mon, 12 Jun
+              </div>
+              <div className="mt-2 font-semibold text-slate-900 text-sm">Faculty Meeting</div>
+              <div className="text-sm text-slate-500 mt-1">10:00 AM · Conference Room</div>
             </div>
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <div className="text-sm font-medium text-gray-500">Tue, 13 Jun</div>
-              <div className="mt-2 font-semibold">Exam Schedule Finalization</div>
-              <div className="text-sm text-gray-500 mt-1">2:00 PM - Principal's Office</div>
+            <div className="p-4 border border-slate-200 rounded-lg hover:border-indigo-200 transition">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                <CalendarClock className="h-3.5 w-3.5" /> Tue, 13 Jun
+              </div>
+              <div className="mt-2 font-semibold text-slate-900 text-sm">Exam Schedule Finalization</div>
+              <div className="text-sm text-slate-500 mt-1">2:00 PM · Principal's Office</div>
             </div>
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <div className="text-sm font-medium text-gray-500">Wed, 14 Jun</div>
-              <div className="mt-2 font-semibold">New Semester Planning</div>
-              <div className="text-sm text-gray-500 mt-1">11:00 AM - Meeting Room A</div>
+            <div className="p-4 border border-slate-200 rounded-lg hover:border-indigo-200 transition">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                <CalendarClock className="h-3.5 w-3.5" /> Wed, 14 Jun
+              </div>
+              <div className="mt-2 font-semibold text-slate-900 text-sm">New Semester Planning</div>
+              <div className="text-sm text-slate-500 mt-1">11:00 AM · Meeting Room A</div>
             </div>
           </div>
         </div>

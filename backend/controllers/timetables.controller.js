@@ -1358,8 +1358,8 @@ static async generateTimetable(req, res, next) {
 
     // GA Configuration
     const geneticAlgorithm = new GeneticAlgorithm({
-      populationSize: Math.min(200, 50 * divisions.length),
-      maxGenerations: Math.min(1000, 100 * divisions.length),
+      populationSize: Math.min(100, 20 * divisions.length),
+      maxGenerations: Math.min(400,  50 * divisions.length),
       mutationRate: 0.12,
       crossoverRate: 0.85,
       elitismRate: 0.15,

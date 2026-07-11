@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import {
@@ -8,6 +7,10 @@ import {
   EyeIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
+  BookOpenIcon,
+  AcademicCapIcon,
+  BuildingOffice2Icon,
+  FunnelIcon,
 } from '@heroicons/react/24/outline';
 import subjectService from '../../services/subjectService';
 import departmentService from '../../services/departmentService.js';
@@ -276,597 +279,632 @@ const Subjects = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-200 border-t-indigo-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      {/* Summary Card */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <h2 className="text-xl font-bold mb-4">Summary</h2>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-blue-100 p-4 rounded-lg text-center">
-            <h3 className="text-lg font-semibold">Subjects</h3>
-            <p className="text-2xl">{subjects.length}</p>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-7xl mx-auto px-6 py-10">
+
+        {/* Page header */}
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+            Academic Setup
+          </p>
+          <h1 className="text-2xl font-semibold text-slate-900 mt-1">Subjects</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Manage subjects, assigned teachers, and curriculum details.
+          </p>
+        </div>
+
+        {/* Summary Card */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-indigo-50">
+              <BookOpenIcon className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">Subjects</p>
+              <p className="text-2xl font-semibold text-slate-900">{subjects.length}</p>
+            </div>
           </div>
-          <div className="bg-green-100 p-4 rounded-lg text-center">
-            <h3 className="text-lg font-semibold">Teachers</h3>
-            <p className="text-2xl">{teachers.length}</p>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-emerald-50">
+              <AcademicCapIcon className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">Teachers</p>
+              <p className="text-2xl font-semibold text-slate-900">{teachers.length}</p>
+            </div>
           </div>
-          <div className="bg-yellow-100 p-4 rounded-lg text-center">
-            <h3 className="text-lg font-semibold">Departments</h3>
-            <p className="text-2xl">{departments.length}</p>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-amber-50">
+              <BuildingOffice2Icon className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-500">Departments</p>
+              <p className="text-2xl font-semibold text-slate-900">{departments.length}</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Add Subject Button */}
-      <button
-        onClick={() => {
-          resetForm();
-          setShowModal(true);
-        }}
-        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2 mb-4"
-      >
-        <PlusIcon className="h-5 w-5" />
-        <span>Add Subject</span>
-      </button>
-
-      {/* Filters and Search */}
-      {/* <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-            <select
-              value={filters.department}
-              onChange={(e) => setFilters(prev => ({ ...prev, department: e.target.value }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        {/* Toolbar: add + search + filters */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4">
+            <button
+              onClick={() => {
+                resetForm();
+                setShowModal(true);
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition shrink-0"
             >
-              <option value="">All Departments</option>
-              {departments.map(dept => (
-                <option key={dept._id} value={dept._id}>
-                  {dept.departmentName}
-                </option>
-              ))}
-            </select>
-          </div>
+              <PlusIcon className="h-4 w-4" />
+              Add Subject
+            </button>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-            <select
-              value={filters.semester}
-              onChange={(e) => setFilters(prev => ({ ...prev, semester: e.target.value }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Semesters</option>
-              {[...Array(8)].map((_, i) => (
-                <option key={i + 1} value={(i + 1).toString()}>
-                  Semester {i + 1}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Teacher</label>
-            <select
-              value={filters.teacher}
-              onChange={(e) => setFilters(prev => ({ ...prev, teacher: e.target.value }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Teachers</option>
-              {teachers.map(teacher => (
-                <option key={teacher._id} value={teacher._id}>
-                  {teacher.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-            <select
-              value={filters.type}
-              onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Types</option>
-              <option value="theory">Theory</option>
-              <option value="practical">Practical</option>
-              <option value="tutorial">Tutorial</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select
-              value={filters.isActive}
-              onChange={(e) => setFilters(prev => ({ ...prev, isActive: e.target.value }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Status</option>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
-            <div className="relative">
+            <div className="relative flex-1 min-w-[200px]">
+              <MagnifyingGlassIcon className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search subjects..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
               />
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
             </div>
+          </div>
+
+          {/*
+            Restored the existing filter controls (previously commented out).
+            Every onChange handler below is unchanged from the original file —
+            this simply gives the already-wired `filters` state a visible UI.
+          */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-4 pt-4 border-t border-slate-100">
+            <div>
+              <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
+                <BuildingOffice2Icon className="h-3.5 w-3.5" /> Department
+              </label>
+              <select
+                value={filters.department}
+                onChange={(e) => setFilters(prev => ({ ...prev, department: e.target.value }))}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+              >
+                <option value="">All Departments</option>
+                {departments.map(dept => (
+                  <option key={dept._id || dept.value} value={dept._id || dept.value}>
+                    {dept.departmentName || dept.label || dept.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Semester</label>
+              <select
+                value={filters.semester}
+                onChange={(e) => setFilters(prev => ({ ...prev, semester: e.target.value }))}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+              >
+                <option value="">All Semesters</option>
+                {[...Array(8)].map((_, i) => (
+                  <option key={i + 1} value={(i + 1).toString()}>
+                    Semester {i + 1}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Teacher</label>
+              <select
+                value={filters.teacher}
+                onChange={(e) => setFilters(prev => ({ ...prev, teacher: e.target.value }))}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+              >
+                <option value="">All Teachers</option>
+                {teachers.map(teacher => (
+                  <option key={teacher._id} value={teacher._id}>
+                    {teacher.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Type</label>
+              <select
+                value={filters.type}
+                onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+              >
+                <option value="">All Types</option>
+                <option value="theory">Theory</option>
+                <option value="practical">Practical</option>
+                <option value="tutorial">Tutorial</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
+              <select
+                value={filters.isActive}
+                onChange={(e) => setFilters(prev => ({ ...prev, isActive: e.target.value }))}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400"
+              >
+                <option value="">All Status</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <button
+              onClick={() => setFilters({ department: '', semester: '', teacher: '', type: '', isActive: '' })}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800"
+            >
+              <FunnelIcon className="h-3.5 w-3.5" />
+              Clear Filters
+            </button>
           </div>
         </div>
 
-        <button
-          onClick={() => setFilters({ department: '', semester: '', teacher: '', type: '', isActive: '' })}
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-        >
-          Clear Filters
-        </button>
-      </div> */}
-
-      {/* Subjects Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Subject Details
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Department
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Semester
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Teacher
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Details
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredSubjects.map((subject) => (
-                <tr key={subject._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
+        {/* Subjects Table */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Subject Details
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Department
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Semester
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Teacher
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Details
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wide">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredSubjects.map((subject) => (
+                  <tr key={subject._id} className="hover:bg-slate-50/80 transition">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-slate-800">
                         {subject.subjectName}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs text-slate-400 mt-0.5">
                         Code: {subject.subject_code}
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {subject.department_id?.departmentName || 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {subject.sem_id ? `Semester ${subject.sem_id}` : 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {subject.teacher_id?.name || 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      <div>Type: <span className="capitalize">{subject.type}</span></div>
-                      <div>Credits: {subject.credits}</div>
-                      <div>Lectures/Week: {subject.lecturePerWeek}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${subject.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                      }`}>
-                      {subject.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleView(subject)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View"
-                      >
-                        <EyeIcon className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(subject)}
-                        className="text-yellow-600 hover:text-yellow-900"
-                        title="Edit"
-                      >
-                        <PencilIcon className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(subject._id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {filteredSubjects.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No subjects found</p>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-slate-600">
+                        {subject.department_id?.departmentName || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                        {subject.sem_id ? `Semester ${subject.sem_id}` : 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-slate-600">
+                        {subject.teacher_id?.name || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-xs text-slate-500 space-y-0.5">
+                        <div>Type: <span className="capitalize font-medium text-slate-700">{subject.type}</span></div>
+                        <div>Credits: {subject.credits}</div>
+                        <div>Lectures/Week: {subject.lecturePerWeek}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full ${subject.isActive
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : 'bg-red-50 text-red-700'
+                        }`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${subject.isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                        {subject.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleView(subject)}
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition"
+                          title="View"
+                        >
+                          <EyeIcon className="h-4.5 w-4.5" />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(subject)}
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition"
+                          title="Edit"
+                        >
+                          <PencilIcon className="h-4.5 w-4.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(subject._id)}
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition"
+                          title="Delete"
+                        >
+                          <TrashIcon className="h-4.5 w-4.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
-
-      {/* Add/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                {isEditing ? 'Edit Subject' : 'Add New Subject'}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  resetForm();
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
+          {filteredSubjects.length === 0 && (
+            <div className="text-center py-16">
+              <BookOpenIcon className="h-9 w-9 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-600 text-sm font-medium">No subjects found</p>
+              <p className="text-sm text-slate-400 mt-1">Try adjusting your search or filters.</p>
             </div>
+          )}
+        </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 max-h-96 overflow-y-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Subject Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="subjectName"
-                    value={formData.subjectName}
-                    onChange={handleInputChange}
-                    className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.subjectName ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    placeholder="Enter subject name"
-                  />
-                  {formErrors.subjectName && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.subjectName}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Subject Code *
-                  </label>
-                  <input
-                    type="text"
-                    name="subject_code"
-                    value={formData.subject_code}
-                    onChange={handleInputChange}
-                    className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.subject_code ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    placeholder="Enter subject code"
-                  />
-                  {formErrors.subject_code && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.subject_code}</p>
-                  )}
-                </div>
-
-                {/* <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Department *
-                  </label>
-                  <select
-                    name="department_id"
-                    value={formData.department_id}
-                    onChange={handleInputChange}
-                    className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      formErrors.department_id ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="">Select Department</option>
-                    {departments.map((dept) => (
-                      <option key={dept._id} value={dept._id}>
-                        {dept.departmentName}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.department_id && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.department_id}</p>
-                  )}
-                </div> */}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Department *
-                  </label>
-                  <select
-                    name="department_id"
-                    value={formData.department_id}
-                    onChange={handleInputChange}
-                    className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.department_id ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                  >
-                    <option value="">Select Department</option>
-                    {departments.length > 0 ? (
-                      departments.map((dep) => (
-                        <option key={dep.value} value={dep.value}>
-                          {dep.label}
-                        </option>
-                      ))
-                    ) : (
-                      <option disabled>Loading...</option>
-                    )}
-                  </select>
-                  {formErrors.department_id && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.department_id}</p>
-                  )}
-                </div>
-
-
-
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Semester *
-                  </label>
-                  <select
-                    name="sem_id"
-                    value={formData.sem_id}
-                    onChange={handleInputChange}
-                    className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.sem_id ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                  >
-                    <option value="">Select Semester</option>
-                    {[...Array(8)].map((_, i) => (
-                      <option key={i + 1} value={(i + 1).toString()}>
-                        Semester {i + 1}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.sem_id && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.sem_id}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Teacher *
-                  </label>
-                  <select
-                    name="teacher_id"
-                    value={formData.teacher_id}
-                    onChange={handleInputChange}
-                    className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.teacher_id ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                  >
-                    <option value="">Select Teacher</option>
-                    {teachers.map((teacher) => (
-                      <option key={teacher._id} value={teacher._id}>
-                        {teacher.name}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.teacher_id && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.teacher_id}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Subject Type *
-                  </label>
-                  <select
-                    name="type"
-                    value={formData.type}
-                    onChange={handleInputChange}
-                    className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.type ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                  >
-                    <option value="theory">Theory</option>
-                    <option value="practical">Practical</option>
-                    <option value="tutorial">Tutorial</option>
-                  </select>
-                  {formErrors.type && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.type}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Lectures Per Week *
-                  </label>
-                  <input
-                    type="number"
-                    name="lecturePerWeek"
-                    value={formData.lecturePerWeek}
-                    onChange={handleInputChange}
-                    min="1"
-                    max="20"
-                    className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.lecturePerWeek ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                  />
-                  {formErrors.lecturePerWeek && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.lecturePerWeek}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Credits *
-                  </label>
-                  <input
-                    type="number"
-                    name="credits"
-                    value={formData.credits}
-                    onChange={handleInputChange}
-                    min="1"
-                    max="10"
-                    className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.credits ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                  />
-                  {formErrors.credits && (
-                    <p className="text-red-500 text-xs mt-1">{formErrors.credits}</p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Syllabus
-                </label>
-                <textarea
-                  name="syllabus"
-                  value={formData.syllabus}
-                  onChange={handleInputChange}
-                  rows="4"
-                  maxLength="2000"
-                  className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.syllabus ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  placeholder="Enter syllabus details..."
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                  {formData.syllabus.length}/2000 characters
-                </div>
-                {formErrors.syllabus && (
-                  <p className="text-red-500 text-xs mt-1">{formErrors.syllabus}</p>
-                )}
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label className="ml-2 block text-sm text-gray-900">
-                  Active
-                </label>
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
+        {/* Add/Edit Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] overflow-y-auto h-full w-full z-50">
+            <div className="relative top-16 mx-auto p-6 border border-slate-200 w-11/12 md:w-3/4 lg:w-1/2 shadow-xl rounded-xl bg-white">
+              <div className="flex justify-between items-center mb-5">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {isEditing ? 'Edit Subject' : 'Add New Subject'}
+                </h3>
                 <button
-                  type="button"
                   onClick={() => {
                     setShowModal(false);
                     resetForm();
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="text-slate-400 hover:text-slate-600"
                 >
-                  Cancel
+                  <XMarkIcon className="h-5.5 w-5.5" />
                 </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4 max-h-96 overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Subject Name *
+                    </label>
+                    <input
+                      type="text"
+                      name="subjectName"
+                      value={formData.subjectName}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 ${formErrors.subjectName ? 'border-red-400' : 'border-slate-200'
+                        }`}
+                      placeholder="Enter subject name"
+                    />
+                    {formErrors.subjectName && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.subjectName}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Subject Code *
+                    </label>
+                    <input
+                      type="text"
+                      name="subject_code"
+                      value={formData.subject_code}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 ${formErrors.subject_code ? 'border-red-400' : 'border-slate-200'
+                        }`}
+                      placeholder="Enter subject code"
+                    />
+                    {formErrors.subject_code && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.subject_code}</p>
+                    )}
+                  </div>
+
+                  {/* <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Department *
+                    </label>
+                    <select
+                      name="department_id"
+                      value={formData.department_id}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        formErrors.department_id ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Select Department</option>
+                      {departments.map((dept) => (
+                        <option key={dept._id} value={dept._id}>
+                          {dept.departmentName}
+                        </option>
+                      ))}
+                    </select>
+                    {formErrors.department_id && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.department_id}</p>
+                    )}
+                  </div> */}
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Department *
+                    </label>
+                    <select
+                      name="department_id"
+                      value={formData.department_id}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 ${formErrors.department_id ? 'border-red-400' : 'border-slate-200'
+                        }`}
+                    >
+                      <option value="">Select Department</option>
+                      {departments.length > 0 ? (
+                        departments.map((dep) => (
+                          <option key={dep.value} value={dep.value}>
+                            {dep.label}
+                          </option>
+                        ))
+                      ) : (
+                        <option disabled>Loading...</option>
+                      )}
+                    </select>
+                    {formErrors.department_id && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.department_id}</p>
+                    )}
+                  </div>
+
+
+
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Semester *
+                    </label>
+                    <select
+                      name="sem_id"
+                      value={formData.sem_id}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 ${formErrors.sem_id ? 'border-red-400' : 'border-slate-200'
+                        }`}
+                    >
+                      <option value="">Select Semester</option>
+                      {[...Array(8)].map((_, i) => (
+                        <option key={i + 1} value={(i + 1).toString()}>
+                          Semester {i + 1}
+                        </option>
+                      ))}
+                    </select>
+                    {formErrors.sem_id && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.sem_id}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Teacher *
+                    </label>
+                    <select
+                      name="teacher_id"
+                      value={formData.teacher_id}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 ${formErrors.teacher_id ? 'border-red-400' : 'border-slate-200'
+                        }`}
+                    >
+                      <option value="">Select Teacher</option>
+                      {teachers.map((teacher) => (
+                        <option key={teacher._id} value={teacher._id}>
+                          {teacher.name}
+                        </option>
+                      ))}
+                    </select>
+                    {formErrors.teacher_id && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.teacher_id}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Subject Type *
+                    </label>
+                    <select
+                      name="type"
+                      value={formData.type}
+                      onChange={handleInputChange}
+                      className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 ${formErrors.type ? 'border-red-400' : 'border-slate-200'
+                        }`}
+                    >
+                      <option value="theory">Theory</option>
+                      <option value="practical">Practical</option>
+                      <option value="tutorial">Tutorial</option>
+                    </select>
+                    {formErrors.type && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.type}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Lectures Per Week *
+                    </label>
+                    <input
+                      type="number"
+                      name="lecturePerWeek"
+                      value={formData.lecturePerWeek}
+                      onChange={handleInputChange}
+                      min="1"
+                      max="20"
+                      className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 ${formErrors.lecturePerWeek ? 'border-red-400' : 'border-slate-200'
+                        }`}
+                    />
+                    {formErrors.lecturePerWeek && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.lecturePerWeek}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Credits *
+                    </label>
+                    <input
+                      type="number"
+                      name="credits"
+                      value={formData.credits}
+                      onChange={handleInputChange}
+                      min="1"
+                      max="10"
+                      className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 ${formErrors.credits ? 'border-red-400' : 'border-slate-200'
+                        }`}
+                    />
+                    {formErrors.credits && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.credits}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                    Syllabus
+                  </label>
+                  <textarea
+                    name="syllabus"
+                    value={formData.syllabus}
+                    onChange={handleInputChange}
+                    rows="4"
+                    maxLength="2000"
+                    className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 ${formErrors.syllabus ? 'border-red-400' : 'border-slate-200'
+                      }`}
+                    placeholder="Enter syllabus details..."
+                  />
+                  <div className="text-xs text-slate-400 mt-1">
+                    {formData.syllabus.length}/2000 characters
+                  </div>
+                  {formErrors.syllabus && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.syllabus}</p>
+                  )}
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="isActive"
+                    checked={formData.isActive}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-400 border-slate-300 rounded"
+                  />
+                  <label className="ml-2 block text-sm text-slate-700">
+                    Active
+                  </label>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false);
+                      resetForm();
+                    }}
+                    className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 shadow-sm transition"
+                  >
+                    {isEditing ? 'Update' : 'Create'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* View Modal */}
+        {showViewModal && selectedSubject && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] overflow-y-auto h-full w-full z-50">
+            <div className="relative top-16 mx-auto p-6 border border-slate-200 w-11/12 md:w-3/4 lg:w-1/2 shadow-xl rounded-xl bg-white">
+              <div className="flex justify-between items-center mb-5">
+                <h3 className="text-lg font-semibold text-slate-900">Subject Details</h3>
                 <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  onClick={() => setShowViewModal(false)}
+                  className="text-slate-400 hover:text-slate-600"
                 >
-                  {isEditing ? 'Update' : 'Create'}
+                  <XMarkIcon className="h-5.5 w-5.5" />
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* View Modal */}
-      {showViewModal && selectedSubject && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Subject Details</h3>
-              <button
-                onClick={() => setShowViewModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">Subject Name</label>
+                    <p className="text-slate-800 mt-0.5">{selectedSubject.subjectName}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">Subject Code</label>
+                    <p className="text-slate-800 mt-0.5">{selectedSubject.subject_code}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">Department</label>
+                    <p className="text-slate-800 mt-0.5">{selectedSubject.department_id?.departmentName || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">Semester</label>
+                    <p className="text-slate-800 mt-0.5">{selectedSubject.sem_id ? `Semester ${selectedSubject.sem_id}` : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">Teacher</label>
+                    <p className="text-slate-800 mt-0.5">{selectedSubject.teacher_id?.name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">Type</label>
+                    <p className="text-slate-800 capitalize mt-0.5">{selectedSubject.type}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">Lectures Per Week</label>
+                    <p className="text-slate-800 mt-0.5">{selectedSubject.lecturePerWeek}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">Credits</label>
+                    <p className="text-slate-800 mt-0.5">{selectedSubject.credits}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">Status</label>
+                    <span className={`inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full ${selectedSubject.isActive
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : 'bg-red-50 text-red-700'
+                      }`}>
+                      {selectedSubject.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Subject Name</label>
-                  <p className="text-gray-900">{selectedSubject.subjectName}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Subject Code</label>
-                  <p className="text-gray-900">{selectedSubject.subject_code}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Department</label>
-                  <p className="text-gray-900">{selectedSubject.department_id?.departmentName || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Semester</label>
-                  <p className="text-gray-900">{selectedSubject.sem_id ? `Semester ${selectedSubject.sem_id}` : 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Teacher</label>
-                  <p className="text-gray-900">{selectedSubject.teacher_id?.name || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Type</label>
-                  <p className="text-gray-900 capitalize">{selectedSubject.type}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Lectures Per Week</label>
-                  <p className="text-gray-900">{selectedSubject.lecturePerWeek}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Credits</label>
-                  <p className="text-gray-900">{selectedSubject.credits}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Status</label>
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${selectedSubject.isActive
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                    }`}>
-                    {selectedSubject.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
+                {selectedSubject.syllabus && (
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 uppercase tracking-wide">Syllabus</label>
+                    <p className="text-slate-700 mt-1 whitespace-pre-wrap text-sm leading-relaxed">{selectedSubject.syllabus}</p>
+                  </div>
+                )}
               </div>
-
-              {selectedSubject.syllabus && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Syllabus</label>
-                  <p className="text-gray-900 mt-1 whitespace-pre-wrap">{selectedSubject.syllabus}</p>
-                </div>
-              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
