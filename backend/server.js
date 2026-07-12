@@ -13,7 +13,7 @@ import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
+import examinationRoutes from './modules/examination/routes/index.js';
 import authRoutes from './routes/auth.route.js';
 import activityRoutes from './routes/activity.route.js'
 import departmentRoutes from './routes/departments.route.js';
@@ -74,6 +74,7 @@ app.use('/api/auth/register', authLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/activity', activityRoutes);
+app.use('/api/examination', examinationRoutes);
 app.get('/health', (req, res) => res.status(200).json({ success: true, message: 'Server is running!' }));
 
 app.use('/api/departments', departmentRoutes);

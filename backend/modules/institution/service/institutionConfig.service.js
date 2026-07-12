@@ -9,7 +9,7 @@
 
 import ApiError from '../../../utils/ApiError.js';
 import institutionConfigRepository from '../repository/institutionConfig.repository.js';
-
+import { createSchedulerContext } from '../../shared/SchedulerContext.js';
 export const listInstitutionConfigs = async ({ departmentId, academicYear } = {}) => {
   const filter = {};
   if (departmentId !== undefined) filter.departmentId = departmentId || null;

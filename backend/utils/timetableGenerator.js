@@ -1339,8 +1339,9 @@ export default class GeneticAlgorithm {
     const theorySubs = subjects.filter(s => s.type === 'theory');
     const practicals = subjects.filter(s => s.type === 'practical' || s.type === 'lab');
     const tutorials = subjects.filter(s => s.type === 'tutorial');
-    const regularRooms = classes.filter(c => !c.classNumber?.toLowerCase().includes('lab'));
-    const labRooms = classes.filter(c => c.classNumber?.toLowerCase().includes('lab'));
+    const regularRooms = classes.filter(c => !(c.isLab === true || c.classNumber?.toLowerCase().includes('lab')));
+    const labRooms = classes.filter(c => c.isLab === true || c.classNumber?.toLowerCase().includes('lab'));
+
 
     // Global tracking to avoid immediate clashes across divisions during init
     const initTeacherSlots = new Map();  // `teacherId_day_period` -> true
@@ -1361,11 +1362,20 @@ export default class GeneticAlgorithm {
       return pool[0] || null; // fallback
     };
 
-    const getTeacher = (subjectId, day, period) => {
+    const getTeacher = (subjectId, day, period, division) => {
       const teacher = subjectTeacherMap.get(String(subjectId));
       if (!teacher) return null;
+
+      // Division eligibility: a teacher with a non-empty `divisions` list
+      // is restricted to those divisions (used for shared/cross-department
+      // teachers scoped to specific divisions). A teacher with no such
+      // list, or an empty one, remains eligible for every division —
+      // identical to today's behavior.
+      if (Array.isArray(teacher.divisions) && teacher.divisions.length > 0 && !teacher.divisions.includes(division)) {
+        return null;
+      }
+
       const key = `${teacher._id}_${day}_${period}`;
-      // If this teacher is already used at this slot, skip
       if (initTeacherSlots.has(key)) return null;
       return teacher;
     };
@@ -1405,7 +1415,7 @@ export default class GeneticAlgorithm {
 
               if (dayCount > 0 || totalCount + 2 > targetPeriods) continue;
 
-              const teacher = getTeacher(lab._id, day, p);
+              const teacher = getTeacher(lab._id, day, p, division);
               const room    = getRoom(lab.type, day, p);
 
               if (!teacher || !room) continue;
@@ -1455,7 +1465,7 @@ export default class GeneticAlgorithm {
 
               if (dayCount >= 1 || totalCount >= target) continue;
 
-              const teacher = getTeacher(tut._id, day, p);
+              const teacher = getTeacher(tut._id, day, p, division);
               const room    = getRoom(tut.type, day, p);
               if (!teacher || !room) continue;
 
@@ -1501,7 +1511,7 @@ export default class GeneticAlgorithm {
             let theoryScheduled = false;
             for (const theory of candidates) {
               const sId    = String(theory._id);
-              const teacher = getTeacher(theory._id, day, p);
+              const teacher = getTeacher(theory._id, day, p, division);
               const room    = getRoom(theory.type, day, p);
               if (!teacher || !room) continue;
 
