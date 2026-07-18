@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.js';
-import Layout from './components/Layout/Layout.jsx';
+import DashboardLayout from './components/Layout/DashboardLayout.jsx';
 import AuthPage from './pages/Auth/Login.jsx';
 import Dashboard from './pages/Dashboard/Dashboard.jsx';
 
@@ -30,7 +30,7 @@ function App() {
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Layout />}>
+          <Route path="/" element={<DashboardLayout />}>
             <Route index element={<Navigate to="/dashboard" />} />
 
             <Route path="/dashboard" element={<Dashboard />} />
