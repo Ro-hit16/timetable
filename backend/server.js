@@ -22,7 +22,7 @@ import subjectRoutes from './routes/subjects.route.js';
 import teacherRoutes from './routes/teachers.route.js';
 import timetableRoutes from './routes/timetables.route.js';
 import pdfRoutes from './routes/pdf.route.js';
-
+import leaveRoutes from './modules/leave/routes/index.js';
 import classRoutes from './routes/class.route.js';
 import globalErrorHandler from './middleware/error.middleware.js';
 import { createError } from './utils/error.js';
@@ -76,7 +76,7 @@ app.use('/api/pdf', pdfRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/examination', examinationRoutes);
 app.get('/health', (req, res) => res.status(200).json({ success: true, message: 'Server is running!' }));
-
+app.use('/api/leave', leaveRoutes);
 app.use('/api/departments', departmentRoutes);
 
 app.use('/api/subjects', subjectRoutes);
