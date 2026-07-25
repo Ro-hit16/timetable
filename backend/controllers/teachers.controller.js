@@ -2,8 +2,7 @@ import Teacher from '../models/teacher.model.js';
 import Department from '../models/department.model.js';
 import multer from 'multer';
 import fs from 'fs';
-import pdfParse from 'pdf-parse';
-import Tesseract from 'tesseract.js';
+import XLSX from 'xlsx';
 import { creatActivity } from './activity.controller.js';
 // ---------------- Existing Controllers ----------------
 
@@ -83,47 +82,47 @@ export const deleteTeacher = async (req, res) => {
   }
 };
 
-// ---------------- Upload Teachers via PDF or Scanned PDF ----------------
+// ---------------- Upload Teachers via Excel (.xlsx / .xls) ----------------
 
 // Multer setup
 const upload = multer({ dest: 'uploads/' });
 export const uploadMiddleware = upload.single('file');
 
-// Handle PDF Upload + Teacher Extraction with pdf-parse + Tesseract OCR
-export const uploadTeachersFromPdf = async (req, res) => {
+// Reads a row's value for a given column name, matching case-insensitively
+// and trimming surrounding whitespace, so minor header variations (e.g.
+// "email" vs "Email", or a trailing space) don't silently drop rows.
+const getRowValue = (row, columnName) => {
+  const matchedKey = Object.keys(row).find(
+    (key) => key.trim().toLowerCase() === columnName.toLowerCase()
+  );
+  return matchedKey ? String(row[matchedKey]).trim() : '';
+};
+
+// Handle Excel Upload + Teacher Extraction. Expects a header row with
+// columns: Name, Email, Department, Semester (matching the frontend's
+// downloadable sample template exactly).
+export const uploadTeachersFromExcel = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
 
     console.log('✅ File received:', req.file);
 
-    const pdfBuffer = fs.readFileSync(req.file.path);
-    let extractedText = '';
+    const workbook = XLSX.readFile(req.file.path);
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
 
-    try {
-      // Try parsing text PDF
-      const pdfData = await pdfParse(pdfBuffer);
-      extractedText = pdfData.text;
-      console.log('✅ PDF parsed via pdf-parse, text length:', extractedText.length);
-    } catch (err) {
-      console.warn('⚠️ pdf-parse failed, falling back to OCR...', err);
-    }
-
-    // If pdf-parse failed or returned empty text, use OCR
-    if (!extractedText || extractedText.trim().length === 0) {
-      console.log('🔎 Using Tesseract OCR for scanned PDF...');
-      const { data: { text } } = await Tesseract.recognize(req.file.path, 'eng', { logger: m => console.log(m) });
-      extractedText = text;
-      console.log('✅ OCR completed, text length:', extractedText.length);
-    }
-
-    // Split lines robustly
-    const lines = extractedText.split(/\r?\n|\r|\n/).map(line => line.trim()).filter(Boolean);
-    console.log('📄 Extracted lines:', lines);
+    // defval: '' ensures a blank cell becomes an empty string rather than
+    // being omitted from the row object entirely.
+    const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+    console.log('📄 Extracted rows:', rows.length);
 
     let createdTeachers = [];
-    for (let line of lines) {
-      // Expect: Name - Email - Department - Semester
-      const [name, email, deptName, semester] = line.split('-').map(x => x?.trim());
+    for (const row of rows) {
+      const name = getRowValue(row, 'Name');
+      const email = getRowValue(row, 'Email');
+      const deptName = getRowValue(row, 'Department');
+      const semester = getRowValue(row, 'Semester');
+
       if (!name || !deptName) continue;
 
       let department = await Department.findOne({ departmentName: deptName });
@@ -143,7 +142,7 @@ export const uploadTeachersFromPdf = async (req, res) => {
     res.status(201).json({ success: true, message: 'Teachers uploaded successfully', data: createdTeachers });
 
   } catch (error) {
-    console.error('❌ PDF upload error:', error);
-    res.status(500).json({ success: false, message: 'Error processing PDF', error: error.message });
+    console.error('❌ Excel upload error:', error);
+    res.status(500).json({ success: false, message: 'Error processing Excel file', error: error.message });
   }
-};
+}; 

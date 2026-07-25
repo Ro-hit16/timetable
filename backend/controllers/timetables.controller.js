@@ -740,10 +740,11 @@ static async generateTimetable(req, res, next) {
     });
 
     // Log activity
-    await creatActivity({
+    const departmentLabel = savedTimetable?.departmentId?.departmentName || departmentId;
+    await createActivity({
       type: 'timetable',
       action: 'Timetable generated',
-      details: `Dept: ${departmentId}, Semester: ${targetSemester}, Year: ${academicYear}, Divisions: ${divisions.length}`
+      details: `Dept: ${departmentLabel}, Semester: ${targetSemester}, Year: ${academicYear}, Divisions: ${divisions.length}`
     });
     console.log("✅ Activity logged");
     

@@ -226,6 +226,48 @@ const Teachers = () => {
     }
   };
 
+  // Generates a CSV template on the frontend only — no backend call.
+  // Department names come from the departments already loaded for this
+  // page (departmentService.getDepartmentsForSelect()), never hardcoded
+  // IDs, since the existing upload parser resolves a department by exact
+  // name (backend/controllers/teachers.controller.js: 
+  // Department.findOne({ departmentName: deptName })).
+  const handleDownloadSampleTemplate = () => {
+    const headers = ['Name', 'Email', 'Department', 'Semester'];
+
+    const sampleDepartmentNames = departments.length > 0
+      ? departments.slice(0, 3).map((dept) => dept.name)
+      : [];
+    const fallbackDepartment = 'Your Department Name';
+
+    const exampleRows = [
+      ['Dr. A. Sharma', 'a.sharma@example.edu', sampleDepartmentNames[0] || fallbackDepartment, '5'],
+      ['Prof. R. Iyer', 'r.iyer@example.edu', sampleDepartmentNames[1] || sampleDepartmentNames[0] || fallbackDepartment, '3'],
+      ['Dr. M. Verma', 'm.verma@example.edu', sampleDepartmentNames[2] || sampleDepartmentNames[0] || fallbackDepartment, '7']
+    ];
+
+    // Basic CSV field escaping - department names can legitimately
+    // contain commas, quotes, or line breaks.
+    const escapeCsvField = (value) => {
+      const stringValue = String(value ?? '');
+      return /[",\r\n]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
+    };
+
+    const csvContent = [headers, ...exampleRows]
+      .map((row) => row.map(escapeCsvField).join(','))
+      .join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'teachers_sample_template.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleUploadPdf = async (e) => {
     e.preventDefault();
 
@@ -363,6 +405,14 @@ const Teachers = () => {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+            <button
+              type="button"
+              onClick={handleDownloadSampleTemplate}
+              className="px-4 py-2 rounded-lg font-medium bg-white text-gray-700 border hover:bg-gray-50 transition-colors flex items-center"
+            >
+              <Download size={18} className="mr-2" />
+              Download Sample Template
+            </button>
             <button
               type="submit"
               className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 flex items-center font-medium"

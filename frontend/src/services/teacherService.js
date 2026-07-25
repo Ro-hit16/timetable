@@ -1,4 +1,3 @@
-
 // services/teacherService.js
 import axios from 'axios';
 
@@ -60,15 +59,15 @@ class TeacherService {
     }
   }
 
-  // ⭐ NEW: Upload teachers via PDF
-  async uploadTeachersPdf(formData) {
+  // Upload teachers via Excel (.xlsx/.xls)
+  async uploadTeachersExcel(formData) {
     try {
-      const response = await axios.post(`${API_BASE_URL}/teachers/upload-pdf`, formData, {
+      const response = await axios.post(`${API_BASE_URL}/teachers/upload-excel`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to upload teachers from PDF');
+      throw new Error(error.response?.data?.message || 'Failed to upload teachers from Excel file');
     }
   }
 }
