@@ -31,11 +31,16 @@ export const create = async (data) => {
   return InstitutionConfig.create(data);
 };
 
+// Fetch -> modify -> save, rather than findByIdAndUpdate, so that any
+// document middleware (pre('save')/post('save') hooks — e.g. the
+// time-slot builder) actually runs. findByIdAndUpdate is a query and
+// bypasses document middleware entirely, which would silently skip that
+// logic.
 export const updateById = async (id, data) => {
-  return InstitutionConfig.findByIdAndUpdate(id, data, {
-    new: true,
-    runValidators: true,
-  });
+  const doc = await InstitutionConfig.findById(id);
+  if (!doc) return null;
+  doc.set(data);
+  return doc.save();
 };
 
 export const deleteById = async (id) => {

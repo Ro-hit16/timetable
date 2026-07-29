@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import * as XLSX from 'xlsx';
 import {
   Plus,
   Trash2,
@@ -9,7 +10,9 @@ import {
   Filter,
   Edit3,
   UserPlus,
-  FileText,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertTriangle,
   Users,
   BookOpen,
   Building2
@@ -36,8 +39,9 @@ const Teachers = () => {
     email: ''
   });
 
-  const [pdfFile, setPdfFile] = useState(null);
+  const [excelFile, setExcelFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadSummary, setUploadSummary] = useState(null);
 
   const manualSemesters = Array.from({ length: 8 }, (_, i) => ({
     _id: (i + 1).toString(),
@@ -226,12 +230,17 @@ const Teachers = () => {
     }
   };
 
-  // Generates a CSV template on the frontend only — no backend call.
-  // Department names come from the departments already loaded for this
-  // page (departmentService.getDepartmentsForSelect()), never hardcoded
-  // IDs, since the existing upload parser resolves a department by exact
-  // name (backend/controllers/teachers.controller.js: 
+  // Generates a genuine .xlsx template on the frontend only — no backend
+  // call. Department names come from the departments already loaded for
+  // this page (departmentService.getDepartmentsForSelect()), never
+  // hardcoded IDs, since the upload parser resolves a department by exact
+  // name (backend/controllers/teachers.controller.js:
   // Department.findOne({ departmentName: deptName })).
+  //
+  // Previously this generated a .csv file while the upload picker (further
+  // below) only accepted .xlsx — a user who downloaded the template and
+  // re-uploaded it immediately would be rejected. Both sides now agree on
+  // a single format: .xlsx.
   const handleDownloadSampleTemplate = () => {
     const headers = ['Name', 'Email', 'Department', 'Semester'];
 
@@ -241,54 +250,60 @@ const Teachers = () => {
     const fallbackDepartment = 'Your Department Name';
 
     const exampleRows = [
-      ['Dr. A. Sharma', 'a.sharma@example.edu', sampleDepartmentNames[0] || fallbackDepartment, '5'],
-      ['Prof. R. Iyer', 'r.iyer@example.edu', sampleDepartmentNames[1] || sampleDepartmentNames[0] || fallbackDepartment, '3'],
-      ['Dr. M. Verma', 'm.verma@example.edu', sampleDepartmentNames[2] || sampleDepartmentNames[0] || fallbackDepartment, '7']
+      ['Dr. A. Sharma', 'a.sharma@example.edu', sampleDepartmentNames[0] || fallbackDepartment, 5],
+      ['Prof. R. Iyer', 'r.iyer@example.edu', sampleDepartmentNames[1] || sampleDepartmentNames[0] || fallbackDepartment, 3],
+      ['Dr. M. Verma', 'm.verma@example.edu', sampleDepartmentNames[2] || sampleDepartmentNames[0] || fallbackDepartment, 7]
     ];
 
-    // Basic CSV field escaping - department names can legitimately
-    // contain commas, quotes, or line breaks.
-    const escapeCsvField = (value) => {
-      const stringValue = String(value ?? '');
-      return /[",\r\n]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
-    };
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...exampleRows]);
+    worksheet['!cols'] = [{ wch: 20 }, { wch: 28 }, { wch: 24 }, { wch: 10 }];
 
-    const csvContent = [headers, ...exampleRows]
-      .map((row) => row.map(escapeCsvField).join(','))
-      .join('\r\n');
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Teachers');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'teachers_sample_template.csv';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    XLSX.writeFile(workbook, 'teachers_sample_template.xlsx');
   };
 
-  const handleUploadPdf = async (e) => {
+  const EXCEL_EXTENSION_PATTERN = /\.xlsx$/i;
+
+  const handleUploadExcel = async (e) => {
     e.preventDefault();
 
-    if (!pdfFile) {
-      toast.warn('Please select a PDF file first');
+    if (!excelFile) {
+      toast.warn('Please select an Excel (.xlsx) file first');
+      return;
+    }
+
+    if (!EXCEL_EXTENSION_PATTERN.test(excelFile.name)) {
+      toast.error('Only .xlsx files are supported. Please select a valid Excel file.');
       return;
     }
 
     setUploading(true);
+    setUploadSummary(null);
     try {
       const formData = new FormData();
-      formData.append('file', pdfFile);
+      formData.append('file', excelFile);
 
-      await teacherService.uploadTeachersPdf(formData);
+      const response = await teacherService.uploadTeachersExcel(formData);
+      const summary = response?.summary;
 
-      toast.success('📄 Teachers uploaded from PDF successfully');
-      setPdfFile(null);
+      if (summary) {
+        setUploadSummary(summary);
+        if (summary.errorCount > 0) {
+          toast.warn(`Imported ${summary.createdCount} of ${summary.totalRows} teacher(s). ${summary.errorCount} row(s) had errors — see details below.`);
+        } else {
+          toast.success(`✅ ${summary.createdCount} teacher(s) uploaded from Excel file successfully`);
+        }
+      } else {
+        toast.success('✅ Teachers uploaded from Excel file successfully');
+      }
+
+      setExcelFile(null);
       fetchTeachers();
     } catch (error) {
-      console.error('Error uploading teachers PDF:', error);
-      toast.error('Failed to upload teachers from PDF');
+      console.error('Error uploading teachers Excel file:', error);
+      toast.error(error.message || 'Failed to upload teachers from Excel file');
     } finally {
       setUploading(false);
     }
@@ -377,30 +392,36 @@ const Teachers = () => {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">PDF Uploads</p>
+                <p className="text-sm font-medium text-gray-600">Excel Uploads</p>
                 <p className="text-3xl font-bold text-gray-900">12</p>
               </div>
               <div className="p-3 rounded-full bg-orange-100">
-                <FileText className="h-6 w-6 text-orange-600" />
+                <FileSpreadsheet className="h-6 w-6 text-orange-600" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* PDF Upload Section */}
+        {/* Excel Upload Section */}
         <div className="mb-8 p-6 bg-white rounded-xl shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Upload className="mr-2" size={20} />
+            <FileSpreadsheet className="mr-2" size={20} />
             Bulk Upload Teachers
           </h3>
-          <p className="text-gray-600 mb-4">Upload a PDF file containing teacher information for bulk processing</p>
-          
-          <form onSubmit={handleUploadPdf} className="flex flex-col md:flex-row md:items-center gap-4">
+          <p className="text-gray-600 mb-1">
+            Upload an Excel (.xlsx) file containing teacher information for bulk processing.
+          </p>
+          <p className="text-sm text-gray-400 mb-4">
+            Required columns: <span className="font-medium text-gray-500">Name, Email, Department, Semester</span>.
+            Download the sample template below to get the exact format.
+          </p>
+
+          <form onSubmit={handleUploadExcel} className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex-1">
               <input
                 type="file"
-                accept="application/pdf"
-                onChange={(e) => setPdfFile(e.target.files[0])}
+                accept=".xlsx"
+                onChange={(e) => setExcelFile(e.target.files[0])}
                 disabled={uploading}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -416,7 +437,7 @@ const Teachers = () => {
             <button
               type="submit"
               className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 flex items-center font-medium"
-              disabled={uploading || !pdfFile}
+              disabled={uploading || !excelFile}
             >
               {uploading ? (
                 <>
@@ -426,11 +447,44 @@ const Teachers = () => {
               ) : (
                 <>
                   <Upload size={18} className="mr-2" />
-                  Upload PDF
+                  Upload Excel File
                 </>
               )}
             </button>
           </form>
+
+          {uploadSummary && (
+            <div className="mt-5 border border-gray-100 rounded-lg overflow-hidden">
+              <div className="flex flex-wrap items-center gap-4 px-4 py-3 bg-gray-50 border-b border-gray-100">
+                <span className="inline-flex items-center text-sm font-medium text-green-700">
+                  <CheckCircle2 size={16} className="mr-1.5" />
+                  {uploadSummary.createdCount} created
+                </span>
+                {uploadSummary.errorCount > 0 && (
+                  <span className="inline-flex items-center text-sm font-medium text-amber-700">
+                    <AlertTriangle size={16} className="mr-1.5" />
+                    {uploadSummary.errorCount} failed
+                  </span>
+                )}
+                <span className="text-sm text-gray-400">
+                  {uploadSummary.totalRows} row(s) processed
+                </span>
+              </div>
+
+              {uploadSummary.errorCount > 0 && (
+                <div className="max-h-56 overflow-y-auto divide-y divide-gray-100">
+                  {uploadSummary.errors.map((err, idx) => (
+                    <div key={idx} className="px-4 py-2.5 text-sm flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+                      <span className="text-gray-700">
+                        Row {err.row}{err.name ? ` — ${err.name}` : ''}{err.email ? ` (${err.email})` : ''}
+                      </span>
+                      <span className="text-amber-700 font-medium">{err.reason}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Add Teacher Form */}

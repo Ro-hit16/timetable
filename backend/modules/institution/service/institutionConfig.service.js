@@ -9,7 +9,8 @@
 
 import ApiError from '../../../utils/ApiError.js';
 import institutionConfigRepository from '../repository/institutionConfig.repository.js';
-import { createSchedulerContext } from '../../shared/SchedulerContext.js';
+import { resolveInstitutionConfig } from './institutionConfigResolver.service.js';
+
 export const listInstitutionConfigs = async ({ departmentId, academicYear } = {}) => {
   const filter = {};
   if (departmentId !== undefined) filter.departmentId = departmentId || null;
@@ -62,6 +63,17 @@ export const deleteInstitutionConfig = async (id) => {
   return deleted;
 };
 
+// Returns the effective, fully-merged InstitutionConfig for a scope:
+// department-specific document (if any) over institution-wide default
+// document (if any) over SYSTEM_DEFAULTS. Read-only — never creates or
+// persists a document.
+export const getEffectiveInstitutionConfig = async ({ departmentId = null, academicYear }) => {
+  if (!academicYear) {
+    throw new ApiError(400, 'academicYear is required');
+  }
+  return resolveInstitutionConfig({ departmentId, academicYear });
+};
+
 export default {
   listInstitutionConfigs,
   getInstitutionConfigById,
@@ -69,4 +81,5 @@ export default {
   createInstitutionConfig,
   updateInstitutionConfig,
   deleteInstitutionConfig,
+  getEffectiveInstitutionConfig,
 };

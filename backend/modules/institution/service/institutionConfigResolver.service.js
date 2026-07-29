@@ -30,7 +30,7 @@ import institutionConfigRepository from '../repository/institutionConfig.reposit
 import teacherPreferenceRepository from '../repository/teacherPreference.repository.js';
 import departmentPreferenceRepository from '../repository/departmentPreference.repository.js';
 import gaProfileRepository from '../repository/gaProfile.repository.js';
-import { createSchedulerContext } from '../../shared/schedulerContext.js';
+import { createSchedulerContext } from '../../shared/SchedulerContext.js';
 import ApiError from '../../../utils/ApiError.js';
 
 // Mirrors backend/utils/timetableGenerator.js's current hardcoded values.
@@ -122,7 +122,7 @@ const mergeOver = (base, source) => {
  * document (if any) wins, else the institution-wide default document (if
  * any) wins, else SYSTEM_DEFAULTS.institutionConfig.
  */
-const resolveInstitutionConfig = async ({ departmentId, academicYear }) => {
+export const resolveInstitutionConfig = async ({ departmentId, academicYear }) => {
   const sources = [];
   let effective = SYSTEM_DEFAULTS.institutionConfig;
 
@@ -278,4 +278,4 @@ export const resolveSchedulerContext = async ({
   });
 };
 
-export default { resolveSchedulerContext, SYSTEM_DEFAULTS };
+export default { resolveSchedulerContext, resolveInstitutionConfig, SYSTEM_DEFAULTS };
