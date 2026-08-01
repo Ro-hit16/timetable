@@ -172,7 +172,7 @@ static async generateTimetable(req, res, next) {
       );
       console.warn(configError.stack);
     }
-
+    console.log("🧩 Final gaConstructorConfig:", gaConstructorConfig);
     const geneticAlgorithm = new GeneticAlgorithm(gaConstructorConfig);
 
     // Apply any resolved penalty overrides onto the constructed instance.

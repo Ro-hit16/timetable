@@ -752,6 +752,7 @@ const Timetables = () => {
       .getEffectiveConfig({ departmentId: filters.department, academicYear: filters.academicYear })
       .then((response) => {
         if (cancelled) return;
+        console.log("Institution Config Response:", response);
         setTimeConfig(response?.data?.resolvedRules || null);
       })
       .catch((error) => {

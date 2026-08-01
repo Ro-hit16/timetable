@@ -310,7 +310,10 @@ export const resolveSchedulerContext = async ({
     academicYear,
     teacherIdsCount: teacherIds.length,
   });
-
+  console.log("✅ Resolved InstitutionConfig:", {
+  departmentId: departmentId,
+  academicYear: academicYear,
+});
   // NOTE: DepartmentPreference / TeacherPreference are supplementary data —
   // a failure loading either must NEVER take down an otherwise-successfully-
   // resolved InstitutionConfig/GAProfile. Previously these four lookups
