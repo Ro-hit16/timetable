@@ -12,6 +12,7 @@ import {
   BookOpen,
   Calendar,
   Clock,
+  Settings,
   X,
   ChevronLeft,
   ChevronRight,
@@ -24,6 +25,7 @@ const navigation = [
   { name: 'Classes', href: '/class', icon: BookOpen },
   { name: 'Subjects', href: '/subjects', icon: Calendar },
   { name: 'Timetables', href: '/timetables', icon: Clock },
+  { name: 'Institution Settings', href: '/settings/institution', icon: Settings },
 ];
 
 const DashboardSidebar = ({ mobileOpen, onCloseMobile, collapsed, onToggleCollapsed }) => {

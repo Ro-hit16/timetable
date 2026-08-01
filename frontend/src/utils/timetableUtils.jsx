@@ -658,7 +658,8 @@ export const renderTimetableGrid = (
   divisionName,
   schedule,
   subjects = [],
-  classrooms = []
+  classrooms = [],
+  timeConfig = null
 ) => {
   if (!schedule || typeof schedule !== "object") {
     return (
@@ -717,15 +718,47 @@ export const renderTimetableGrid = (
     return merged;
   };
 
-  // Period timings (adjust to your actual timetable)
-  const periodTimings = {
-    1: "10:30–11:30",
-    2: "11:30–12:30",
-    3: "1:15–2:15",
-    4: "2:15–3:15",
-    5: "3:30–4:30",
-    6: "4:30–5:30",
-  };
+  // Period timings + breaks come from the institution's configured
+  // timetable timings (backend/modules/institution — see
+  // services/institutionConfigService.js's getEffectiveConfig). When no
+  // config is passed in (e.g. fetch failed, or an older caller hasn't
+  // been updated yet) we fall back to the previous hardcoded values so
+  // existing timetables keep rendering exactly as before.
+  const fallbackTimeSlots = [
+    { index: 0, label: "Period 1", startTime: "10:30", endTime: "11:30" },
+    { index: 1, label: "Period 2", startTime: "11:30", endTime: "12:30" },
+    { index: 2, label: "Period 3", startTime: "13:15", endTime: "14:15" },
+    { index: 3, label: "Period 4", startTime: "14:15", endTime: "15:15" },
+    { index: 4, label: "Period 5", startTime: "15:30", endTime: "16:30" },
+    { index: 5, label: "Period 6", startTime: "16:30", endTime: "17:30" },
+  ];
+  const fallbackBreaks = [
+    { label: "Lunch Break", afterPeriodIndex: 1, startTime: "12:30", endTime: "13:15" },
+    { label: "Tea Break", afterPeriodIndex: 3, startTime: "15:15", endTime: "15:30" },
+  ];
+
+  const timeSlots = (timeConfig?.timeSlots?.length ? timeConfig.timeSlots : fallbackTimeSlots);
+  const breaks = (timeConfig?.breaks?.length ? timeConfig.breaks : fallbackBreaks);
+
+  const formatRange = (slot) =>
+    slot?.startTime && slot?.endTime ? `${slot.startTime}–${slot.endTime}` : "";
+
+  // Map 1-based period number -> its configured time slot (falls back to
+  // an empty label for any period beyond what's configured, e.g. if the
+  // actual schedule has more periods than the resolved config expects).
+  const periodTimings = {};
+  for (let i = 1; i <= periodsPerDay; i++) {
+    const slot = timeSlots[i - 1];
+    periodTimings[i] = slot ? formatRange(slot) : "";
+  }
+
+  // Breaks keyed by "insert after this many periods placed" (1-based),
+  // derived from each break's 0-based afterPeriodIndex.
+  const breaksAfterCount = new Map();
+  breaks.forEach((b) => {
+    const count = (b.afterPeriodIndex ?? -1) + 1;
+    if (count >= 1) breaksAfterCount.set(count, b);
+  });
 
   const buildHeader = () => {
     const headers = [];
@@ -735,29 +768,19 @@ export const renderTimetableGrid = (
           key={`p${i}`}
           className="border w-32 h-16 px-2 py-1 bg-gray-100 text-center align-middle"
         >
-          <div className="font-medium">Period {i}</div>
+          <div className="font-medium">{timeSlots[i - 1]?.label || `Period ${i}`}</div>
           <div className="text-xs text-gray-600">{periodTimings[i]}</div>
         </th>
       );
-      if (i === 2) {
+      const brk = breaksAfterCount.get(i);
+      if (brk) {
         headers.push(
           <th
-            key="lunch"
+            key={`break-${i}`}
             className="border w-32 h-16 px-2 py-1 bg-yellow-100 text-center align-middle"
           >
-            <div className="font-medium">Lunch Break</div>
-            <div className="text-xs text-gray-600">12:30–1:15</div>
-          </th>
-        );
-      }
-      if (i === 4) {
-        headers.push(
-          <th
-            key="short"
-            className="border w-32 h-16 px-2 py-1 bg-yellow-100 text-center align-middle"
-          >
-            <div className="font-medium"> Tea Break</div>
-            <div className="text-xs text-gray-600">3:15–3:30</div>
+            <div className="font-medium">{brk.label || "Break"}</div>
+            <div className="text-xs text-gray-600">{formatRange(brk)}</div>
           </th>
         );
       }
@@ -822,24 +845,15 @@ export const renderTimetableGrid = (
               );
             }
 
-            // Insert recess columns after period 2 and 4
-            if (filled === 2) {
+            // Insert configured recess/break columns after the periods they follow.
+            const rowBrk = breaksAfterCount.get(filled);
+            if (rowBrk) {
               cells.push(
                 <td
-                  key="lunch"
+                  key={`break-${filled}`}
                   className="border w-32 h-16 px-2 py-1 bg-yellow-50 text-center font-medium align-middle"
                 >
-                  Recess<br />12:30–1:15
-                </td>
-              );
-            }
-            if (filled === 4) {
-              cells.push(
-                <td
-                  key="short"
-                  className="border w-32 h-16 px-2 py-1 bg-yellow-50 text-center font-medium align-middle"
-                >
-                  Break<br />3:15–3:30
+                  {rowBrk.label || "Break"}<br />{formatRange(rowBrk)}
                 </td>
               );
             }

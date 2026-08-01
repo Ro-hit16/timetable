@@ -12,12 +12,13 @@
 //   5. Merges everything into flattened `resolvedRules`.
 //   6. Validates the merged result.
 //   7. Returns exactly one SchedulerContext object (see
-//      backend/modules/shared/schedulerContext.js).
+//      backend/modules/shared/SchedulerContext.js).
 //
-// IMPORTANT: this file is NOT called from timetables.controller.js or
-// timetableGenerator.js anywhere in this task. It exists as a
-// standalone, independently-testable service. Wiring it into the actual
-// generation flow is an explicitly separate, future task.
+// This file IS called from timetables.controller.js (via
+// gaAdapter.service.js's buildGAConstructorConfig) to resolve
+// working days / periods-per-day / lab block size for a generation run,
+// and from institutionConfig.controller.js's `getEffectiveInstitutionConfig`
+// for the frontend timetable/settings display.
 //
 // SYSTEM_DEFAULTS intentionally mirrors the values that are hardcoded
 // today inside backend/utils/timetableGenerator.js's GeneticAlgorithm
@@ -42,6 +43,12 @@ export const SYSTEM_DEFAULTS = Object.freeze({
     institutionName: '',
     workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
     periodsPerDay: 6,
+    periodStartTime: '09:00',
+    periodEndTime: '16:00',
+    periodDurationMinutes: 60,
+    breakDurationMinutes: 0,
+    lunchBreakStart: null,
+    lunchBreakEnd: null,
     timeSlots: [],
     breaks: [],
     slotPreferences: {
@@ -53,6 +60,7 @@ export const SYSTEM_DEFAULTS = Object.freeze({
       preferredPeriodIndices: [0, 1, 2, 3],
       maxOccurrencesPerDay: 1,
       defaultLecturesPerWeek: 3,
+      sessionDurationPeriods: 1,
     },
     defaultLabRules: {
       preferredStartPeriodIndices: [0, 2, 4],
@@ -91,6 +99,34 @@ export const SYSTEM_DEFAULTS = Object.freeze({
 
 const toPlainObject = (doc) => (doc && typeof doc.toObject === 'function' ? doc.toObject() : doc);
 
+// --- TEMP DEBUG: remove once the "resolved from: system-default" issue is
+// confirmed fixed in production. Set to false to silence without deleting
+// the call sites below.
+const DEBUG_RESOLVER = true;
+const debugLog = (...args) => {
+  if (DEBUG_RESOLVER) console.log('[InstitutionConfigResolver]', ...args);
+};
+
+// Normalizes a scope id so a populated document (`{ _id, name, ... }`),
+// a Mongoose ObjectId instance, or a plain string all compare the same
+// way against the DB. Also strips accidental leading/trailing whitespace
+// (e.g. from a form field or URL param), which — combined with a Mongoose
+// CastError being swallowed as "no match" rather than thrown — is the most
+// common reason a document that was "saved correctly" is never matched by
+// a scope query. Returns `null` for anything falsy so `null` always means
+// "institution-wide", never a bad/empty id.
+const normalizeScopeId = (id) => {
+  if (!id) return null;
+  if (typeof id === 'object' && id._id) return String(id._id).trim();
+  return String(id).trim();
+};
+
+// Normalizes academicYear the same way (trim only — it's a plain string
+// field, not an ObjectId), so a value like "2024-25 " (trailing space from
+// a form) doesn't silently fail to match "2024-25" as saved.
+const normalizeAcademicYear = (academicYear) =>
+  typeof academicYear === 'string' ? academicYear.trim() : academicYear;
+
 /**
  * Merges a resolved Mongoose document (already converted to a plain
  * object) over a defaults object, one level deep for known sub-sections.
@@ -126,20 +162,36 @@ export const resolveInstitutionConfig = async ({ departmentId, academicYear }) =
   const sources = [];
   let effective = SYSTEM_DEFAULTS.institutionConfig;
 
-  const instituteWide = await institutionConfigRepository.findByScope({
-    departmentId: null,
-    academicYear,
+  const normalizedDepartmentId = normalizeScopeId(departmentId);
+  const normalizedAcademicYear = normalizeAcademicYear(academicYear);
+
+  debugLog('incoming scope ->', {
+    rawDepartmentId: departmentId,
+    normalizedDepartmentId,
+    rawAcademicYear: academicYear,
+    normalizedAcademicYear,
   });
+
+  const instituteWideQuery = { departmentId: null, academicYear: normalizedAcademicYear };
+  debugLog('Mongo query (institution-wide) ->', instituteWideQuery);
+  const instituteWide = await institutionConfigRepository.findByScope(instituteWideQuery);
+  debugLog('institution-wide match ->', instituteWide?._id ? String(instituteWide._id) : null);
   if (instituteWide) {
     effective = mergeOver(effective, toPlainObject(instituteWide));
     sources.push('institution-wide-default');
   }
 
-  if (departmentId) {
-    const departmentSpecific = await institutionConfigRepository.findByScope({
-      departmentId,
-      academicYear,
-    });
+  if (normalizedDepartmentId) {
+    const departmentQuery = {
+      departmentId: normalizedDepartmentId,
+      academicYear: normalizedAcademicYear,
+    };
+    debugLog('Mongo query (department-specific) ->', departmentQuery);
+    const departmentSpecific = await institutionConfigRepository.findByScope(departmentQuery);
+    debugLog(
+      'department-specific match ->',
+      departmentSpecific?._id ? String(departmentSpecific._id) : null
+    );
     if (departmentSpecific) {
       effective = mergeOver(effective, toPlainObject(departmentSpecific));
       sources.push('department-override');
@@ -147,6 +199,7 @@ export const resolveInstitutionConfig = async ({ departmentId, academicYear }) =
   }
 
   if (!sources.length) sources.push('system-default');
+  debugLog('resolved sources ->', sources);
 
   return { config: effective, sources };
 };
@@ -159,19 +212,22 @@ const resolveGAProfile = async ({ departmentId, academicYear }) => {
   const sources = [];
   let effective = SYSTEM_DEFAULTS.gaProfile;
 
+  const normalizedDepartmentId = normalizeScopeId(departmentId);
+  const normalizedAcademicYear = normalizeAcademicYear(academicYear);
+
   const instituteWide = await gaProfileRepository.findByScope({
     departmentId: null,
-    academicYear,
+    academicYear: normalizedAcademicYear,
   });
   if (instituteWide) {
     effective = mergeOver(effective, toPlainObject(instituteWide));
     sources.push('institution-wide-default');
   }
 
-  if (departmentId) {
+  if (normalizedDepartmentId) {
     const departmentSpecific = await gaProfileRepository.findByScope({
-      departmentId,
-      academicYear,
+      departmentId: normalizedDepartmentId,
+      academicYear: normalizedAcademicYear,
     });
     if (departmentSpecific) {
       effective = mergeOver(effective, toPlainObject(departmentSpecific));
@@ -212,6 +268,13 @@ const validateResolvedConfig = (institutionConfig) => {
 const buildResolvedRules = ({ institutionConfig, departmentPreference }) => ({
   workingDays: institutionConfig.workingDays,
   periodsPerDay: institutionConfig.periodsPerDay,
+  periodStartTime: institutionConfig.periodStartTime,
+  periodEndTime: institutionConfig.periodEndTime,
+  periodDurationMinutes: institutionConfig.periodDurationMinutes,
+  breakDurationMinutes: institutionConfig.breakDurationMinutes,
+  lunchBreakStart: institutionConfig.lunchBreakStart,
+  lunchBreakEnd: institutionConfig.lunchBreakEnd,
+  timeSlots: institutionConfig.timeSlots,
   breaks: institutionConfig.breaks,
   theory: institutionConfig.defaultTheoryRules,
   lab: institutionConfig.defaultLabRules,
@@ -231,17 +294,33 @@ const buildResolvedRules = ({ institutionConfig, departmentPreference }) => ({
  * @param {string|null} params.departmentId
  * @param {string} params.academicYear
  * @param {string[]} [params.teacherIds] - teachers involved in this resolution
- * @returns {Promise<import('../../shared/schedulerContext.js').SchedulerContext>}
+ * @returns {Promise<import('../../shared/SchedulerContext.js').SchedulerContext>}
  */
 export const resolveSchedulerContext = async ({
   departmentId = null,
   academicYear,
   teacherIds = [],
 }) => {
-  if (!academicYear) {
+  if (!academicYear || !normalizeAcademicYear(academicYear)) {
     throw new ApiError(400, 'academicYear is required to resolve a SchedulerContext');
   }
 
+  debugLog('resolveSchedulerContext called with ->', {
+    departmentId,
+    academicYear,
+    teacherIdsCount: teacherIds.length,
+  });
+
+  // NOTE: DepartmentPreference / TeacherPreference are supplementary data —
+  // a failure loading either must NEVER take down an otherwise-successfully-
+  // resolved InstitutionConfig/GAProfile. Previously these four lookups
+  // were combined in a single Promise.all(), so ANY one rejecting (a bad
+  // teacherIds cast, a missing doc edge case, etc.) discarded the whole
+  // SchedulerContext — including a perfectly good InstitutionConfig — and
+  // the controller's catch-all silently fell back to pure hardcoded GA
+  // defaults with no visible cause. Each optional lookup is now isolated
+  // behind its own .catch() so it degrades to null/[] instead of failing
+  // the entire resolution.
   const [
     { config: institutionConfig, sources: institutionConfigSources },
     { profile: gaProfile, sources: gaProfileSources },
@@ -251,10 +330,20 @@ export const resolveSchedulerContext = async ({
     resolveInstitutionConfig({ departmentId, academicYear }),
     resolveGAProfile({ departmentId, academicYear }),
     departmentId
-      ? departmentPreferenceRepository.findByDepartmentAndYear({ departmentId, academicYear })
+      ? departmentPreferenceRepository
+          .findByDepartmentAndYear({ departmentId, academicYear })
+          .catch((err) => {
+            debugLog('⚠️ departmentPreference lookup failed, continuing without it ->', err.message);
+            return null;
+          })
       : Promise.resolve(null),
     teacherIds.length
-      ? teacherPreferenceRepository.findByTeacherIdsAndYear({ teacherIds, academicYear })
+      ? teacherPreferenceRepository
+          .findByTeacherIdsAndYear({ teacherIds, academicYear })
+          .catch((err) => {
+            debugLog('⚠️ teacherPreference lookup failed, continuing without it ->', err.message);
+            return [];
+          })
       : Promise.resolve([]),
   ]);
 
@@ -278,4 +367,4 @@ export const resolveSchedulerContext = async ({
   });
 };
 
-export default { resolveSchedulerContext, resolveInstitutionConfig, SYSTEM_DEFAULTS };
+export default { resolveSchedulerContext, SYSTEM_DEFAULTS };

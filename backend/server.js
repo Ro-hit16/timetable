@@ -24,6 +24,7 @@ import timetableRoutes from './routes/timetables.route.js';
 import pdfRoutes from './routes/pdf.route.js';
 import leaveRoutes from './modules/leave/routes/index.js';
 import classRoutes from './routes/class.route.js';
+import institutionRoutes from './modules/institution/routes/index.js';
 import globalErrorHandler from './middleware/error.middleware.js';
 import { createError } from './utils/error.js';
 
@@ -83,6 +84,7 @@ app.use('/api/subjects', subjectRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/timetables', timetableRoutes);
 app.use('/api/classes', classRoutes);
+app.use('/api/institution', institutionRoutes);
 
 // ------------------------ ERROR HANDLING ------------------------
 app.all('*', (req, res, next) => {

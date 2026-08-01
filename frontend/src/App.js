@@ -10,6 +10,7 @@ import Timetables from './pages/Timetables/Timetables.jsx';
 import Departments from './pages/Department/Department.jsx'; 
 import ProtectedRoute from './components/Common/ProtectedRoute.js';
 import ClassPage from './pages/Class/Class.jsx'; 
+import InstitutionSettings from './pages/Settings/InstitutionSettings.jsx';
 
 function App() {
   const { loading } = useAuth();
@@ -39,6 +40,7 @@ function App() {
             <Route path="/class" element={<ClassPage />} />
             <Route path="/subjects" element={<Subjects />} />
             <Route path="/timetables" element={<Timetables />} />
+            <Route path="/settings/institution" element={<InstitutionSettings />} />
           </Route>
         </Route>
 

@@ -11,11 +11,7 @@ import {
   validateCreateInstitutionConfig,
   validateUpdateInstitutionConfig,
 } from '../validator/institutionConfig.validator.js';
-
-// Mongoose ObjectId (and similar) values need to become plain strings
-// before being re-validated by the Joi schema, which expects strings.
-const toPlainScalar = (value) =>
-  value && typeof value.toString === 'function' && typeof value !== 'string' ? value.toString() : value;
+import { resolveSchedulerContext } from '../service/institutionConfigResolver.service.js';
 
 export const listInstitutionConfigs = asyncHandler(async (req, res) => {
   const { departmentId, academicYear } = req.query;
@@ -40,6 +36,27 @@ export const getInstitutionConfigByScope = asyncHandler(async (req, res) => {
   return sendResponse(res, 200, true, 'InstitutionConfig fetched', config);
 });
 
+// Returns the *effective* (merged: department override -> institution-
+// wide default -> system default) timing configuration for a scope. This
+// is what the frontend timetable display should call — it always
+// resolves to something renderable, even when no InstitutionConfig
+// document has been saved yet for that exact department/year.
+export const getEffectiveInstitutionConfig = asyncHandler(async (req, res) => {
+  const { departmentId, academicYear } = req.query;
+  if (!academicYear) {
+    throw new ApiError(400, 'academicYear is required');
+  }
+  const schedulerContext = await resolveSchedulerContext({
+    departmentId: departmentId || null,
+    academicYear,
+  });
+  return sendResponse(res, 200, true, 'Effective InstitutionConfig resolved', {
+    institutionConfig: schedulerContext.institutionConfig,
+    resolvedRules: schedulerContext.resolvedRules,
+    sources: schedulerContext.metadata.sources,
+  });
+});
+
 export const createInstitutionConfig = asyncHandler(async (req, res) => {
   const { error, value } = validateCreateInstitutionConfig(req.body);
   if (error) {
@@ -50,40 +67,13 @@ export const createInstitutionConfig = asyncHandler(async (req, res) => {
 });
 
 export const updateInstitutionConfig = asyncHandler(async (req, res) => {
-  const { error: partialError, value: partialValue } = validateUpdateInstitutionConfig(req.body);
-  if (partialError) {
-    throw new ApiError(400, 'Invalid InstitutionConfig payload', partialError.details);
-  }
-
-  // Fetch the existing document so we can validate the *merged* result,
-  // not just the (possibly partial) incoming payload in isolation. This
-  // catches cases where an otherwise-valid partial update would leave the
-  // overall configuration invalid (e.g. clearing workingDays down to []).
   const existing = await institutionConfigService.getInstitutionConfigById(req.params.id);
-  const existingPlain = existing.toObject();
-
-  const merged = {
-    ...existingPlain,
-    departmentId: toPlainScalar(existingPlain.departmentId),
-    ...partialValue,
-  };
-
-  const { error: mergedError } = validateCreateInstitutionConfig(merged);
-  if (mergedError) {
-    throw new ApiError(400, 'Resulting InstitutionConfig would be invalid', mergedError.details);
+  const { error, value } = validateUpdateInstitutionConfig(req.body, existing?.toObject ? existing.toObject() : existing);
+  if (error) {
+    throw new ApiError(400, 'Invalid InstitutionConfig payload', error.details);
   }
-
-  const updated = await institutionConfigService.updateInstitutionConfig(req.params.id, partialValue);
+  const updated = await institutionConfigService.updateInstitutionConfig(req.params.id, value);
   return sendResponse(res, 200, true, 'InstitutionConfig updated', updated);
-});
-
-export const getEffectiveInstitutionConfig = asyncHandler(async (req, res) => {
-  const { departmentId, academicYear } = req.query;
-  const effective = await institutionConfigService.getEffectiveInstitutionConfig({
-    departmentId: departmentId || null,
-    academicYear,
-  });
-  return sendResponse(res, 200, true, 'Effective InstitutionConfig resolved', effective);
 });
 
 export const deleteInstitutionConfig = asyncHandler(async (req, res) => {
@@ -95,8 +85,8 @@ export default {
   listInstitutionConfigs,
   getInstitutionConfigById,
   getInstitutionConfigByScope,
+  getEffectiveInstitutionConfig,
   createInstitutionConfig,
   updateInstitutionConfig,
   deleteInstitutionConfig,
-  getEffectiveInstitutionConfig,
 };

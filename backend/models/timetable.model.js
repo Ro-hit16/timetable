@@ -7,7 +7,11 @@ const timeSlotSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 1,
-    max: 6
+    // Was hardcoded to 6 (matching the old fixed 6-period day). Institutions
+    // can now configure a different periodsPerDay (see modules/institution),
+    // so this is raised to a generous upper bound instead of removed
+    // outright, to keep basic sanity validation on the field.
+    max: 20
   },
   subject: {
     _id: mongoose.Schema.Types.ObjectId,

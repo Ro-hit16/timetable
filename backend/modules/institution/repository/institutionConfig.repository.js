@@ -31,15 +31,14 @@ export const create = async (data) => {
   return InstitutionConfig.create(data);
 };
 
-// Fetch -> modify -> save, rather than findByIdAndUpdate, so that any
-// document middleware (pre('save')/post('save') hooks — e.g. the
-// time-slot builder) actually runs. findByIdAndUpdate is a query and
-// bypasses document middleware entirely, which would silently skip that
-// logic.
 export const updateById = async (id, data) => {
+  // Load + assign + save (rather than findByIdAndUpdate) so the model's
+  // pre('validate') hook — which regenerates `timeSlots`/`breaks` from
+  // the simple timing fields and rejects inconsistent timings — actually
+  // runs. Document middleware does not fire on findByIdAndUpdate.
   const doc = await InstitutionConfig.findById(id);
   if (!doc) return null;
-  doc.set(data);
+  Object.assign(doc, data);
   return doc.save();
 };
 

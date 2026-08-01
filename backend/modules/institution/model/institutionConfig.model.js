@@ -18,6 +18,7 @@
 // created for any of these sub-sections.
 
 import mongoose from 'mongoose';
+import { buildTimeSlotsFromConfig, validateTimingConfig } from '../utils/timeSlotBuilder.js';
 
 const { Schema } = mongoose;
 
@@ -63,6 +64,11 @@ const defaultTheoryRulesSchema = new Schema(
     preferredPeriodIndices: { type: [Number], default: [] }, // e.g. [0,1,2,3]
     maxOccurrencesPerDay: { type: Number, min: 0, default: 1 },
     defaultLecturesPerWeek: { type: Number, min: 0, default: 3 },
+    // "Default Theory Duration" — how many consecutive periods a single
+    // theory session occupies (almost always 1, but kept configurable so
+    // an institution running double-period lectures doesn't need a
+    // schema change).
+    sessionDurationPeriods: { type: Number, min: 1, default: 1 },
   },
   { _id: false }
 );
@@ -132,6 +138,50 @@ const institutionConfigSchema = new Schema(
       },
     },
 
+    // ── Simple, admin-facing timing fields ──────────────────────────────
+    // These are the source of truth for timetable timings. `timeSlots`
+    // and `breaks` below are derived from them automatically (see the
+    // pre-validate hook) so every existing consumer that already reads
+    // `timeSlots` / `breaks` keeps working without changes.
+    periodsPerDay: {
+      type: Number,
+      min: 1,
+      default: 6,
+    },
+    periodStartTime: {
+      type: String, // "HH:mm"
+      trim: true,
+      default: '09:00',
+    },
+    periodEndTime: {
+      type: String, // "HH:mm"
+      trim: true,
+      default: '16:00',
+    },
+    periodDurationMinutes: {
+      type: Number,
+      min: 1,
+      default: 60,
+    },
+    breakDurationMinutes: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    lunchBreakStart: {
+      type: String, // "HH:mm"
+      trim: true,
+      default: null,
+    },
+    lunchBreakEnd: {
+      type: String, // "HH:mm"
+      trim: true,
+      default: null,
+    },
+
+    // Derived/cached from the simple fields above via the pre-validate
+    // hook below. Kept as real schema fields (not virtuals) so existing
+    // reads/queries against `timeSlots` / `breaks` are unaffected.
     timeSlots: {
       type: [timeSlotSchema],
       default: [],
@@ -208,5 +258,42 @@ institutionConfigSchema.index(
   { departmentId: 1, academicYear: 1 },
   { unique: true }
 );
+
+// Regenerate `timeSlots` / `breaks` from the simple timing fields on
+// every save, and reject structurally inconsistent timings (overlaps,
+// invalid ranges, lunch outside working hours, non-positive durations)
+// before they ever reach the database. This is a safety net: the Joi
+// validator in institutionConfig.validator.js already rejects bad input
+// at the HTTP boundary, but any other write path (seed scripts, direct
+// service calls) goes through this hook too.
+institutionConfigSchema.pre('validate', function preValidateTimeSlots(next) {
+  const errors = validateTimingConfig({
+    periodsPerDay: this.periodsPerDay,
+    periodStartTime: this.periodStartTime,
+    periodEndTime: this.periodEndTime,
+    periodDurationMinutes: this.periodDurationMinutes,
+    breakDurationMinutes: this.breakDurationMinutes,
+    lunchBreakStart: this.lunchBreakStart,
+    lunchBreakEnd: this.lunchBreakEnd,
+  });
+
+  if (errors.length) {
+    return next(new Error(`Invalid timetable timing configuration: ${errors.join('; ')}`));
+  }
+
+  const { timeSlots, breaks } = buildTimeSlotsFromConfig({
+    periodsPerDay: this.periodsPerDay,
+    periodStartTime: this.periodStartTime,
+    periodDurationMinutes: this.periodDurationMinutes,
+    breakDurationMinutes: this.breakDurationMinutes || 0,
+    lunchBreakStart: this.lunchBreakStart,
+    lunchBreakEnd: this.lunchBreakEnd,
+  });
+
+  this.timeSlots = timeSlots;
+  this.breaks = breaks;
+
+  next();
+});
 
 export default mongoose.model('InstitutionConfig', institutionConfigSchema);

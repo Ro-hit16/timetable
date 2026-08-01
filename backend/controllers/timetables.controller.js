@@ -12,469 +12,6 @@ class TimetableController {
 
   // 🔧 MODIFIED: Enhanced to generate all divisions together
   // ========================================================================
-//   static async generateTimetable(req, res, next) {
-//     try {
-//       console.log("📥 Incoming Request Body:", JSON.stringify(req.body, null, 2));
-
-//       const {
-//         departmentId,
-//         semester,
-//         academicYear,
-//         divisions,
-//         subjects = [],
-//         teachers = [],
-//         classes = [],
-//       } = req.body;
-
-//       // Basic required checks
-//       if (!departmentId || !semester || !academicYear || !Array.isArray(divisions) || divisions.length === 0) {
-//         return next(createError(400, 'Missing required fields: departmentId, semester, academicYear, or divisions'));
-//       }
-
-//       // 🆕 CHANGE 1: Log division count for department-level generation
-//       console.log(`🏢 Generating department-level timetable for ${divisions.length} divisions:`, divisions);
-//       // ========================================================================
-
-//       const targetSemester = String(semester).trim();
-//       const normalize = (val) => String(val ?? '').trim();
-
-//       // Filter by semester
-//       const filteredSubjects = subjects.filter(s => normalize(s.semester) === targetSemester);
-//       const filteredTeachers = teachers.filter(t => normalize(t.semester) === targetSemester);
-//       const filteredClasses = classes.filter(c => normalize(c.semester) === targetSemester);
-
-//       // 🆕 CHANGE 2: Enhanced validation logging
-//       console.log(`📊 Filtered Resources:`, {
-//         subjects: filteredSubjects.length,
-//         teachers: filteredTeachers.length,
-//         classrooms: filteredClasses.length,
-//         semester: targetSemester
-//       });
-//       // ========================================================================
-
-//       if (!filteredSubjects.length) {
-//         return next(createError(400, `No subjects found for semester ${targetSemester}`));
-//       }
-//       if (!filteredTeachers.length) {
-//         return next(createError(400, `No teachers found for semester ${targetSemester}. Please assign teachers to subjects.`));
-//       }
-//       if (!filteredClasses.length) {
-//         return next(createError(400, `No classes found for semester ${targetSemester}`));
-//       }
-
-//       // 🔧 MODIFIED: Enhanced GA configuration for department-level
-//       // ========================================================================
-//       const geneticAlgorithm = new GeneticAlgorithm({
-//         populationSize: Math.min(200, 50 * divisions.length), // 🆕 Scale population with divisions
-//         maxGenerations: Math.min(1000, 100 * divisions.length), // 🆕 Scale generations with divisions
-//         mutationRate: 0.12, // 🆕 Slightly reduced for stability
-//         crossoverRate: 0.85, // 🆕 Increased for better exploration
-//         elitismRate: 0.15, // 🆕 Increased to preserve good solutions
-//         departmentId,
-//         semester: targetSemester,
-//         academicYear,
-//         divisions,
-//       });
-
-//       console.log(`🧬 GA Configuration:`, {
-//         populationSize: geneticAlgorithm.populationSize,
-//         maxGenerations: geneticAlgorithm.maxGenerations,
-//         divisions: divisions.length
-//       });
-//       // ========================================================================
-
-//       // 🆕 CHANGE 3: Generate with timing measurement
-//       const startTime = Date.now();
-//       // ========================================================================
-
-//       const { schedule, metadata } = await geneticAlgorithm.generateSchedule({
-//         divisions,
-//         subjects: filteredSubjects,
-//         teachers: filteredTeachers,
-//         classes: filteredClasses,
-//       });
-
-//       // 🆕 CHANGE 4: Log generation time
-//       const generationTime = ((Date.now() - startTime) / 1000).toFixed(2);
-//       console.log(`⏱️ Generation completed in ${generationTime} seconds`);
-//       // ========================================================================
-
-//       if (!schedule || Object.keys(schedule).length === 0) {
-//         return next(createError(500, 'Failed to generate a valid schedule'));
-//       }
-
-//       // 🆕 CHANGE 5: Validate schedule for conflicts
-//       const conflicts = await TimetableController.validateTimetable({
-//         divisions: divisions.map(name => ({
-//           division_name: name,
-//           schedule: schedule[name] || {}
-//         }))
-//       });
-
-//       console.log(`🔍 Conflict Validation Result:`, {
-//         totalConflicts: conflicts.length,
-//         conflicts: conflicts.slice(0, 5) // Log first 5 conflicts
-//       });
-
-//       // 🆕 CHANGE 6: Warn if conflicts exist
-//       if (conflicts.length > 0) {
-//         console.warn(`⚠️ Generated schedule has ${conflicts.length} conflicts!`);
-//         console.warn('Top conflicts:', conflicts.slice(0, 3));
-//       } else {
-//         console.log('✅ No conflicts detected in generated schedule');
-//       }
-//       // ========================================================================
-
-//       // Create lookup maps
-//       const subjectMap = Object.fromEntries(
-//         filteredSubjects.map(s => [
-//           String(s._id),
-//           { ...s, subjectName: s.subjectName || s.name || 'Unnamed Subject' }
-//         ])
-//       );
-//       const teacherMap = Object.fromEntries(
-//         filteredTeachers.map(t => [String(t._id), t])
-//       );
-
-//       // Enrich slots via ID-based lookup
-//       for (const division of Object.keys(schedule)) {
-//         const daySchedule = schedule[division];
-//         for (const day of Object.keys(daySchedule)) {
-//           daySchedule[day] = daySchedule[day].map(period => {
-//             if (!period) return null;
-
-//             const enriched = { ...period };
-
-//             const subjectId =
-//               enriched.subject?._id ||
-//               enriched.subject?.id ||
-//               enriched.subject;
-
-//             if (subjectId && subjectMap[subjectId]) {
-//               enriched.subject = subjectMap[subjectId];
-//               enriched.subject.name =
-//                 enriched.subject.subjectName ||
-//                 enriched.subject.name ||
-//                 'Unknown Subject';
-//             } else {
-//               enriched.subject = { name: 'Unknown Subject' };
-//             }
-
-//             const teacherId =
-//               enriched.teacher?._id ||
-//               enriched.teacher?.id ||
-//               enriched.teacher;
-//             if (teacherId && teacherMap[teacherId]) {
-//               enriched.teacher = teacherMap[teacherId];
-//             } else {
-//               enriched.teacher = { name: 'Unknown Teacher' };
-//             }
-
-//             return enriched;
-//           });
-//         }
-//       }
-
-//       // 🔧 MODIFIED: Enhanced metadata with conflict information
-//       // ========================================================================
-//       const timetable = new Timetable({
-//         departmentId,
-//         semester: Number(targetSemester),
-//         academicYear,
-//         divisions: divisions.map(name => ({
-//           division_name: name,
-//           schedule: schedule[name] || {},
-//         })),
-//         status: conflicts.length === 0 ? 'published' : 'draft', // 🆕 Auto-publish if no conflicts
-//         generation_metadata: {
-//           fitness_score: metadata.fitnessScore,
-//           generation_count: metadata.generation_count || metadata.generations || 0,
-//           conflicts_resolved: metadata.conflictsResolved || conflicts.length === 0,
-//           conflict_count: conflicts.length, // 🆕 Track conflict count
-//           algorithm_version: metadata.algorithm_version,
-//           generated_at: new Date(),
-//           generation_time_seconds: parseFloat(generationTime), // 🆕 Track generation time
-//           divisions_count: divisions.length, // 🆕 Track number of divisions
-//         },
-//       });
-//       // ========================================================================
-
-//       await timetable.save();
-//       const savedTimetable = await Timetable.findById(timetable._id).lean();
-
-//       // 🆕 CHANGE 7: Enhanced response with conflict info
-//       // ========================================================================
-//       res.status(201).json({
-//         success: true,
-//         message: conflicts.length === 0 
-//           ? 'Timetable generated successfully with no conflicts' 
-//           : `Timetable generated with ${conflicts.length} conflicts`,
-//         data: savedTimetable,
-//         conflicts: conflicts.slice(0, 10), // 🆕 Return top 10 conflicts
-//         statistics: {
-//           totalConflicts: conflicts.length,
-//           generationTime: `${generationTime}s`,
-//           divisionsGenerated: divisions.length,
-//           fitnessScore: metadata.fitnessScore?.toFixed(2)
-//         }
-//       });
-//       // add activity
-// await creatActivity({
-//   type: 'timetable',
-//   action: 'Timetable generated',
-//   details: `Dept: ${departmentId}, Semester: ${targetSemester}, Year: ${academicYear}`
-// });
-//       console.log("activity created");
-      
-//     } catch (error) {
-//       console.error("💥 Timetable generation failed:", error);
-//       return next(createError(500, error.message || 'Error in timetable generation'));
-//     }
-//   }
-
-
-
-// Replace your entire generateTimetable method with this SCHEMA-MATCHED version
-
-// static async generateTimetable(req, res, next) {
-//   try {
-//     console.log("📥 Incoming Request Body:", JSON.stringify(req.body, null, 2));
-
-//     const {
-//       departmentId,
-//       semester,
-//       academicYear,
-//       divisions,
-//     } = req.body;
-
-//     if (!departmentId || !semester || !academicYear || !Array.isArray(divisions) || divisions.length === 0) {
-//       return next(createError(400, 'Missing required fields: departmentId, semester, academicYear, or divisions'));
-//     }
-
-//     console.log(`🏢 Generating timetable for ${divisions.length} divisions:`, divisions);
-
-//     const targetSemester = String(semester).trim();
-
-//     // Fetch data from database
-//     const [subjects, teachers, classes] = await Promise.all([
-//       subjectModel.find({ 
-//         department_id: departmentId,
-//         sem_id: targetSemester
-//       }).populate('teacher_id', 'name email').lean(),
-      
-//       teacherModel.find({
-//         department: departmentId,
-//         semester: parseInt(targetSemester)
-//       }).lean(),
-      
-//       classModel.find({
-//         department_id: departmentId,
-//         semester: targetSemester
-//       }).lean()
-//     ]);
-
-//     console.log(`📝 Fetched from Database:`, {
-//       subjects: subjects.length,
-//       subjectsWithTeachers: subjects.filter(s => s.teacher_id).length,
-//       teachers: teachers.length,
-//       classrooms: classes.length,
-//       semester: targetSemester
-//     });
-
-//     // Validation
-//     if (subjects.length === 0) {
-//       return next(createError(400, `No subjects found for department ${departmentId} and semester ${targetSemester}`));
-//     }
-
-//     const subjectsWithoutTeachers = subjects.filter(s => !s.teacher_id);
-//     if (subjectsWithoutTeachers.length > 0) {
-//       console.warn(`⚠️ ${subjectsWithoutTeachers.length} subjects have no teacher assigned:`, 
-//         subjectsWithoutTeachers.map(s => s.subjectName).slice(0, 5)
-//       );
-//     }
-
-//     const subjectsWithTeachers = subjects.filter(s => s.teacher_id);
-//     if (subjectsWithTeachers.length === 0) {
-//       return next(createError(400, `No subjects have teachers assigned for semester ${targetSemester}`));
-//     }
-
-//     if (teachers.length === 0) {
-//       return next(createError(400, `No teachers found for department ${departmentId} and semester ${targetSemester}`));
-//     }
-
-//     if (classes.length === 0) {
-//       return next(createError(400, `No classrooms found for department ${departmentId} and semester ${targetSemester}`));
-//     }
-
-//     // Transform subjects
-//     const transformedSubjects = subjects.map(s => ({
-//       _id: s._id,
-//       name: s.subjectName,
-//       subjectName: s.subjectName,
-//       subject_code: s.subject_code,
-//       semester: s.sem_id,
-//       type: s.type,
-//       credits: s.credits,
-//       teacher_id: s.teacher_id,
-//       lecturePerWeek: s.lecturePerWeek
-//     }));
-
-//     // Create lookup maps for enrichment
-//     const teacherMap = new Map(teachers.map(t => [String(t._id), t]));
-//     const classMap = new Map(classes.map(c => [String(c._id), c]));
-
-//     // GA Configuration
-//     const geneticAlgorithm = new GeneticAlgorithm({
-//       populationSize: Math.min(200, 50 * divisions.length),
-//       maxGenerations: Math.min(1000, 100 * divisions.length),
-//       mutationRate: 0.12,
-//       crossoverRate: 0.85,
-//       elitismRate: 0.15,
-//       departmentId,
-//       semester: targetSemester,
-//       academicYear,
-//       divisions,
-//     });
-
-//     console.log(`🧬 GA Configuration:`, {
-//       populationSize: geneticAlgorithm.populationSize,
-//       maxGenerations: geneticAlgorithm.maxGenerations,
-//       divisions: divisions.length
-//     });
-
-//     const startTime = Date.now();
-
-//     const { schedule, metadata } = await geneticAlgorithm.generateSchedule({
-//       divisions,
-//       subjects: transformedSubjects,
-//       teachers: teachers,
-//       classes: classes,
-//     });
-
-//     const generationTime = ((Date.now() - startTime) / 1000).toFixed(2);
-//     console.log(`⏱️ Generation completed in ${generationTime} seconds`);
-
-//     if (!schedule || Object.keys(schedule).length === 0) {
-//       return next(createError(500, 'Failed to generate a valid schedule'));
-//     }
-
-//     // Validate schedule
-//     const conflicts = await TimetableController.validateTimetable({
-//       divisions: divisions.map(name => ({
-//         division_name: name,
-//         schedule: schedule[name] || {}
-//       }))
-//     });
-
-//     console.log(`🔍 Conflict Validation:`, {
-//       totalConflicts: conflicts.length,
-//       topConflicts: conflicts.slice(0, 3)
-//     });
-
-//     // 🔧 CRITICAL FIX: Match exact schema structure
-//     const normalizedSchedule = {};
-    
-//     for (const division of Object.keys(schedule)) {
-//       normalizedSchedule[division] = {};
-      
-//       for (const day of Object.keys(schedule[division])) {
-//         normalizedSchedule[division][day] = schedule[division][day].map(period => {
-//           if (!period) return null;
-
-//           // Get teacher and classroom details
-//           const teacherId = period.teacher?._id ? String(period.teacher._id) : null;
-//           const classroomId = period.classroom?._id ? String(period.classroom._id) : null;
-          
-//           const teacher = teacherId ? teacherMap.get(teacherId) : null;
-//           const classroom = classroomId ? classMap.get(classroomId) : null;
-
-//           // ✅ Match EXACT schema structure
-//           return {
-//             period: period.period,
-            
-//             // Subject: { _id: ObjectId, name: String, type: String }
-//             subject: {
-//               _id: period.subject?._id,
-//               name: period.subject?.subjectName || period.subject?.name || 'Unknown',
-//               type: period.subject?.type || 'theory'
-//             },
-            
-//             // Teacher: { _id: ObjectId, name: String }
-//             teacher: teacher ? {
-//               _id: teacher._id,
-//               name: teacher.name
-//             } : null,
-            
-//             // Classroom: String (room number)
-//             classroom: classroom?.classNumber || classroom?.room_number || null
-//           };
-//         });
-//       }
-//     }
-
-//     console.log('✅ Schedule normalized to match MongoDB schema');
-
-//     // Save timetable with normalized data
-//     const timetable = new Timetable({
-//       departmentId,
-//       semester: targetSemester, // Keep as string to match schema
-//       academicYear,
-//       divisions: divisions.map(name => ({
-//         division_name: name,
-//         schedule: normalizedSchedule[name] || {},
-//       })),
-//       status: conflicts.length === 0 ? 'published' : 'draft',
-//       generation_metadata: {
-//         fitness_score: metadata.fitnessScore,
-//         generation_count: metadata.generation_count || 0,
-//         conflicts_resolved: conflicts.length,
-//         conflict_count: conflicts.length,
-//         algorithm_version: metadata.algorithm_version || '3.2.0',
-//         generated_at: new Date(),
-//         generation_time_seconds: parseFloat(generationTime),
-//         divisions_count: divisions.length,
-//       },
-//     });
-
-//     await timetable.save();
-    
-//     // Fetch saved timetable with populated data
-//     const savedTimetable = await Timetable.findById(timetable._id)
-//       .populate('departmentId', 'name departmentName')
-//       .lean();
-
-//     res.status(201).json({
-//       success: true,
-//       message: conflicts.length === 0 
-//         ? 'Timetable generated successfully with no conflicts' 
-//         : `Timetable generated with ${conflicts.length} conflicts`,
-//       data: savedTimetable,
-//       conflicts: conflicts.slice(0, 10),
-//       statistics: {
-//         totalConflicts: conflicts.length,
-//         generationTime: `${generationTime}s`,
-//         divisionsGenerated: divisions.length,
-//         subjectsScheduled: transformedSubjects.length,
-//         teachersUsed: teachers.length,
-//         fitnessScore: metadata.fitnessScore?.toFixed(2)
-//       }
-//     });
-
-//     // Log activity
-//     await creatActivity({
-//       type: 'timetable',
-//       action: 'Timetable generated',
-//       details: `Dept: ${departmentId}, Semester: ${targetSemester}, Year: ${academicYear}, Divisions: ${divisions.length}`
-//     });
-//     console.log("✅ Activity logged");
-    
-//   } catch (error) {
-//     console.error("💥 Timetable generation failed:", error);
-//     return next(createError(500, error.message || 'Error in timetable generation'));
-//   }
-// }
-
-
 static async generateTimetable(req, res, next) {
   try {
     console.log("📥 Incoming Request Body:", JSON.stringify(req.body, null, 2));
@@ -610,8 +147,30 @@ static async generateTimetable(req, res, next) {
       penaltyOverrides = getPenaltyOverrides(schedulerContext);
 
       console.log(`🏫 InstitutionConfig resolved from:`, schedulerContext.metadata.sources);
+      // TEMP DEBUG: prove exactly what reaches the GA constructor. Remove
+      // once confirmed in production logs that days/periodsPerDay/labBlockSize
+      // are present when a custom InstitutionConfig exists for this scope.
+      console.log(`🧩 Final gaConstructorConfig passed to GeneticAlgorithm ->`, {
+        days: gaConstructorConfig.days,
+        periodsPerDay: gaConstructorConfig.periodsPerDay,
+        labBlockSize: gaConstructorConfig.labBlockSize,
+        populationSize: gaConstructorConfig.populationSize,
+        maxGenerations: gaConstructorConfig.maxGenerations,
+      });
     } catch (configError) {
-      console.warn(`⚠️ InstitutionConfig resolution failed, using hardcoded defaults:`, configError.message);
+      // TEMP DEBUG: log the FULL error (name + stack), not just .message.
+      // Previously only configError.message was logged here, which made it
+      // impossible to tell which of the resolver's internal lookups threw —
+      // so a resolved InstitutionConfig could be silently discarded (see
+      // resolveSchedulerContext's Promise.all) with no way to diagnose why
+      // generation kept falling back to hardcoded defaults.
+      console.warn(
+        `⚠️ InstitutionConfig resolution failed, using hardcoded defaults:`,
+        configError.name,
+        '-',
+        configError.message
+      );
+      console.warn(configError.stack);
     }
 
     const geneticAlgorithm = new GeneticAlgorithm(gaConstructorConfig);
@@ -628,6 +187,13 @@ static async generateTimetable(req, res, next) {
       populationSize: geneticAlgorithm.populationSize,
       maxGenerations: geneticAlgorithm.maxGenerations,
       divisions: divisions.length
+    });
+    // TEMP DEBUG: prove what the GA instance actually ended up using,
+    // after its own constructor-level fallback logic ran.
+    console.log(`🧩 GeneticAlgorithm instance actually using ->`, {
+      days: geneticAlgorithm.days,
+      periodsPerDay: geneticAlgorithm.periodsPerDay,
+      labBlockSize: geneticAlgorithm.labBlockSize,
     });
 
     const startTime = Date.now();
@@ -739,15 +305,22 @@ static async generateTimetable(req, res, next) {
       }
     });
 
-    // Log activity
-    const departmentLabel = savedTimetable?.departmentId?.departmentName || departmentId;
-    await createActivity({
-      type: 'timetable',
-      action: 'Timetable generated',
-      details: `Dept: ${departmentLabel}, Semester: ${targetSemester}, Year: ${academicYear}, Divisions: ${divisions.length}`
-    });
-    console.log("✅ Activity logged");
-    
+    // Log activity (best-effort only — response has already been sent above,
+    // so any failure here must be swallowed locally and must NOT reach the
+    // outer catch/next(), which would attempt to send a second response and
+    // throw ERR_HTTP_HEADERS_SENT)
+    try {
+      const departmentLabel = savedTimetable?.departmentId?.departmentName || departmentId;
+      await creatActivity({
+        type: 'timetable',
+        action: 'Timetable generated',
+        details: `Dept: ${departmentLabel}, Semester: ${targetSemester}, Year: ${academicYear}, Divisions: ${divisions.length}`
+      });
+      console.log("✅ Activity logged");
+    } catch (activityError) {
+      console.error("⚠️ Activity logging failed (non-fatal):", activityError);
+    }
+
   } catch (error) {
     console.error("💥 Timetable generation failed:", error);
     return next(createError(500, error.message || 'Error in timetable generation'));
@@ -976,77 +549,6 @@ static async generateTimetable(req, res, next) {
       next(createError(500, 'Error fetching timetables'));
     }
   }
-
-  // static async getTimetableById(req, res, next) {
-  //   try {
-  //     const timetable = await Timetable.findById(req.params.id);
-
-  //     if (!timetable) {
-  //       return next(createError(404, 'Timetable not found'));
-  //     }
-
-  //     if (req.query.stats === 'true') {
-  //       const statistics = {
-  //         totalClasses: 0,
-  //         labSessions: 0,
-  //         theorySessions: 0,
-  //         teacherUtilization: 0,
-  //         roomUtilization: 0,
-  //         fitness_score: timetable.generation_metadata?.fitness_score || 0
-  //       };
-
-  //       const uniqueTeachers = new Set();
-  //       const uniqueRooms = new Set();
-
-  //       timetable.divisions?.forEach((division) => {
-  //         const schedule = division.schedule;
-  //         if (!schedule || typeof schedule !== 'object') return;
-
-  //         Object.entries(schedule).forEach(([_, daySlots]) => {
-  //           if (!Array.isArray(daySlots)) return;
-
-  //           daySlots.forEach((slot) => {
-  //             if (slot && typeof slot === 'object' && slot.subject) {
-  //               statistics.totalClasses++;
-
-  //               const type = (slot.type || 'theory').toLowerCase();
-  //               if (type === 'lab') {
-  //                 statistics.labSessions++;
-  //               } else {
-  //                 statistics.theorySessions++;
-  //               }
-
-  //               if (slot.teacher) uniqueTeachers.add(slot.teacher.toString());
-  //               if (slot.classroom) uniqueRooms.add(slot.classroom.toString());
-  //             }
-  //           });
-  //         });
-  //       });
-
-  //       statistics.teacherUtilization = uniqueTeachers.size > 0
-  //         ? parseFloat(((statistics.totalClasses / (uniqueTeachers.size * 6 * 5)) * 100).toFixed(2))
-  //         : 0;
-
-  //       statistics.roomUtilization = uniqueRooms.size > 0
-  //         ? parseFloat(((statistics.totalClasses / (uniqueRooms.size * 6 * 5)) * 100).toFixed(2))
-  //         : 0;
-
-  //       return res.status(200).json({
-  //         success: true,
-  //         data: { statistics }
-  //       });
-  //     }
-
-  //     return res.status(200).json({
-  //       success: true,
-  //       data: { timetable }
-  //     });
-
-  //   } catch (err) {
-  //     return next(createError(500, 'Error fetching timetable. Please check the ID and schedule structure.'));
-  //   }
-  // }
-
 
 static async getTimetableById(req, res, next) {
   try {

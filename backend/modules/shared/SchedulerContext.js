@@ -1,4 +1,4 @@
-// backend/modules/shared/schedulerContext.js
+// backend/modules/shared/SchedulerContext.js
 //
 // SchedulerContext is the single, standard object produced by
 // InstitutionConfigResolver and consumed by GAAdapter (and, in the

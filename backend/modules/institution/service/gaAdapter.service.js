@@ -13,9 +13,10 @@
 // this adapter is left entirely to whichever controller wires them
 // together in a future, separately-scoped integration task.
 //
-// IMPORTANT: this file is NOT imported by timetables.controller.js or
-// timetableGenerator.js anywhere in this task. Nothing here changes
-// current generation behavior.
+// This file IS imported by timetables.controller.js, which calls
+// buildGAConstructorConfig() to build the config object passed to
+// `new GeneticAlgorithm(...)`, including timetable timings resolved
+// from InstitutionConfig (days, periodsPerDay, labBlockSize).
 
 /**
  * Builds the GA constructor config object (population size, generations,
@@ -26,7 +27,7 @@
  * default/clamp logic (e.g. `config.populationSize || 150`) applies
  * exactly as it does today when a caller doesn't pass that key.
  *
- * @param {import('../../shared/schedulerContext.js').SchedulerContext} schedulerContext
+ * @param {import('../../shared/SchedulerContext.js').SchedulerContext} schedulerContext
  * @param {Object} params
  * @param {string} params.departmentId - required by the GA constructor today
  * @param {string} params.semester - required by the GA constructor today. NOTE:
@@ -61,6 +62,21 @@ export const buildGAConstructorConfig = (
   if (gaProfile?.crossoverRate != null) config.crossoverRate = gaProfile.crossoverRate;
   if (gaProfile?.elitismRate != null) config.elitismRate = gaProfile.elitismRate;
 
+  // Timetable timings: read from the resolved InstitutionConfig instead
+  // of relying on GeneticAlgorithm's own hardcoded fallbacks. `days` /
+  // `periodsPerDay` / `labBlockSize` are all constructor options
+  // timetableGenerator.js now accepts (see that file's constructor).
+  const resolvedRules = schedulerContext.resolvedRules || {};
+  if (Array.isArray(resolvedRules.workingDays) && resolvedRules.workingDays.length) {
+    config.days = resolvedRules.workingDays;
+  }
+  if (Number.isInteger(resolvedRules.periodsPerDay) && resolvedRules.periodsPerDay > 0) {
+    config.periodsPerDay = resolvedRules.periodsPerDay;
+  }
+  if (Number.isInteger(resolvedRules.lab?.consecutiveBlockSize) && resolvedRules.lab.consecutiveBlockSize > 0) {
+    config.labBlockSize = resolvedRules.lab.consecutiveBlockSize;
+  }
+
   return config;
 };
 
@@ -72,7 +88,7 @@ export const buildGAConstructorConfig = (
  * constructed GeneticAlgorithm instance, since `penalties` is a public
  * instance property. Exposed here only as a plain data getter.
  *
- * @param {import('../../shared/schedulerContext.js').SchedulerContext} schedulerContext
+ * @param {import('../../shared/SchedulerContext.js').SchedulerContext} schedulerContext
  * @returns {Object} sparse map of penalty-key -> numeric override
  */
 export const getPenaltyOverrides = (schedulerContext) => {
@@ -82,13 +98,12 @@ export const getPenaltyOverrides = (schedulerContext) => {
 /**
  * Returns the resolved scheduling rules (working days, periods/day, slot
  * preferences, etc.) from a SchedulerContext, in the flattened shape
- * `resolvedRules` already provides. This is exposed here purely as a
- * convenience passthrough for a future Phase 2 integration that would
- * teach timetableGenerator.js to read `this.days` / `this.periodsPerDay`
- * from a passed-in config instead of the hardcoded constants it uses
- * today. Nothing calls this function anywhere in this task.
+ * `resolvedRules` already provides. Used by buildGAConstructorConfig()
+ * above, and available as a convenience passthrough for any other caller
+ * that needs the raw resolved rules (e.g. a frontend-facing "effective
+ * config" endpoint).
  *
- * @param {import('../../shared/schedulerContext.js').SchedulerContext} schedulerContext
+ * @param {import('../../shared/SchedulerContext.js').SchedulerContext} schedulerContext
  * @returns {Object}
  */
 export const getResolvedSchedulingRules = (schedulerContext) => {

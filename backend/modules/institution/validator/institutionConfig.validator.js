@@ -6,6 +6,7 @@
 // Mongoose or the database.
 
 import Joi from 'joi';
+import { validateTimingConfig } from '../utils/timeSlotBuilder.js';
 
 const timeSlotSchema = Joi.object({
   index: Joi.number().integer().min(0).required(),
@@ -32,6 +33,7 @@ const defaultTheoryRulesSchema = Joi.object({
   preferredPeriodIndices: Joi.array().items(Joi.number().integer().min(0)).default([]),
   maxOccurrencesPerDay: Joi.number().integer().min(0).default(1),
   defaultLecturesPerWeek: Joi.number().integer().min(0).default(3),
+  sessionDurationPeriods: Joi.number().integer().min(1).default(1),
 });
 
 const defaultLabRulesSchema = Joi.object({
@@ -67,6 +69,17 @@ export const createInstitutionConfigSchema = Joi.object({
   workingDays: Joi.array().items(Joi.string()).min(1).default([
     'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
   ]),
+  periodsPerDay: Joi.number().integer().min(1).default(6),
+  periodStartTime: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).default('09:00'),
+  periodEndTime: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).default('16:00'),
+  periodDurationMinutes: Joi.number().min(1).default(60),
+  breakDurationMinutes: Joi.number().min(0).default(0),
+  lunchBreakStart: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).allow(null, '').default(null),
+  lunchBreakEnd: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).allow(null, '').default(null),
+  // timeSlots/breaks are derived server-side from the simple fields
+  // above (see institutionConfig.model.js's pre-validate hook). Accepted
+  // here only so reads that round-trip a fetched document don't fail
+  // validation; any values submitted are recomputed, not trusted.
   timeSlots: Joi.array().items(timeSlotSchema).default([]),
   breaks: Joi.array().items(breakSlotSchema).default([]),
   slotPreferences: slotPreferencesSchema.default({}),
@@ -85,11 +98,53 @@ export const updateInstitutionConfigSchema = createInstitutionConfigSchema.fork(
   (schema) => schema.optional()
 );
 
-export const validateCreateInstitutionConfig = (payload) =>
-  createInstitutionConfigSchema.validate(payload, { abortEarly: false, stripUnknown: true });
+// Applies the shared timing-consistency checks (overlap/range/lunch/
+// duration rules) on top of Joi's shape validation. `existing` is the
+// current document (for updates), so a partial payload that only changes
+// e.g. `periodDurationMinutes` is still checked against the full,
+// merged set of timing fields rather than against Joi defaults.
+const applyTimingValidation = (value, existing = {}) => {
+  const merged = {
+    periodsPerDay: value.periodsPerDay ?? existing.periodsPerDay ?? 6,
+    periodStartTime: value.periodStartTime ?? existing.periodStartTime ?? '09:00',
+    periodEndTime: value.periodEndTime ?? existing.periodEndTime ?? '16:00',
+    periodDurationMinutes: value.periodDurationMinutes ?? existing.periodDurationMinutes ?? 60,
+    breakDurationMinutes: value.breakDurationMinutes ?? existing.breakDurationMinutes ?? 0,
+    lunchBreakStart: value.lunchBreakStart ?? existing.lunchBreakStart ?? null,
+    lunchBreakEnd: value.lunchBreakEnd ?? existing.lunchBreakEnd ?? null,
+  };
 
-export const validateUpdateInstitutionConfig = (payload) =>
-  updateInstitutionConfigSchema.validate(payload, { abortEarly: false, stripUnknown: true });
+  const timingErrors = validateTimingConfig(merged);
+  return timingErrors;
+};
+
+export const validateCreateInstitutionConfig = (payload) => {
+  const result = createInstitutionConfigSchema.validate(payload, { abortEarly: false, stripUnknown: true });
+  if (result.error) return result;
+
+  const timingErrors = applyTimingValidation(result.value);
+  if (timingErrors.length) {
+    return {
+      error: { details: timingErrors.map((message) => ({ message })) },
+      value: result.value,
+    };
+  }
+  return result;
+};
+
+export const validateUpdateInstitutionConfig = (payload, existing = {}) => {
+  const result = updateInstitutionConfigSchema.validate(payload, { abortEarly: false, stripUnknown: true });
+  if (result.error) return result;
+
+  const timingErrors = applyTimingValidation(result.value, existing);
+  if (timingErrors.length) {
+    return {
+      error: { details: timingErrors.map((message) => ({ message })) },
+      value: result.value,
+    };
+  }
+  return result;
+};
 
 export default {
   createInstitutionConfigSchema,

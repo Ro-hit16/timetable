@@ -23,6 +23,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { toast } from 'react-toastify';
 import timetableService from '../../services/timetableService';
+import institutionConfigService from '../../services/institutionConfigService';
 import {
   divisions,
   days,
@@ -48,6 +49,10 @@ const Timetables = () => {
   const [teachers, setTeachers] = useState([]);
   const [classes, setClasses] = useState([]);
   const [allDivisions, setAllDivisions] = useState([]);
+  // Institution-configured timetable timings (working days, periods,
+  // start/end times, breaks) for whichever timetable is currently
+  // selected/displayed — see utils/timetableUtils.jsx#renderTimetableGrid.
+  const [timeConfig, setTimeConfig] = useState(null);
 
 
   const academicYears = ["2024-25", "2025-26", "2026-27"];
@@ -734,6 +739,30 @@ const Timetables = () => {
     }
   }, [timetables, activeTab]);
 
+  // Fetch the institution's configured timetable timings for whichever
+  // department/academic year is currently displayed, so the grid shows
+  // real period start/end times and breaks instead of hardcoded labels.
+  useEffect(() => {
+    if (!filters.academicYear) {
+      setTimeConfig(null);
+      return;
+    }
+    let cancelled = false;
+    institutionConfigService
+      .getEffectiveConfig({ departmentId: filters.department, academicYear: filters.academicYear })
+      .then((response) => {
+        if (cancelled) return;
+        setTimeConfig(response?.data?.resolvedRules || null);
+      })
+      .catch((error) => {
+        console.error('Error fetching institution timing config:', error);
+        if (!cancelled) setTimeConfig(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [filters.department, filters.academicYear]);
+
   useEffect(() => {
     // console.log("✅ formattedTimetable.divisions =", formattedTimetable?.divisions);
     formattedTimetable?.divisions?.forEach((div, idx) => {
@@ -1291,7 +1320,8 @@ const Timetables = () => {
                         division.division_name,
                         schedule,
                         formattedTimetable.subjects || subjects,
-                        formattedTimetable.classes || classes
+                        formattedTimetable.classes || classes,
+                        timeConfig
                       )
                     ) : (
                       <div className="text-center py-8 text-gray-500">
