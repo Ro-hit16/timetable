@@ -1,5 +1,3 @@
-
-
 import axios from 'axios';
 
 const API_URL = '/api/classes';
@@ -21,7 +19,7 @@ const uploadPdf = (formData) => axios.post(`${API_URL}/upload-pdf`, formData, {
   }
 });
 
-export default {
+const classService = {
   getAll,
   create,
   update,
@@ -30,3 +28,4 @@ export default {
   uploadPdf
 };
 
+export default classService;
