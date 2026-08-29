@@ -13,3 +13,4 @@ backend/dist/
 
 # Vercel or other deployment folders
 .vercel/
+node_modules

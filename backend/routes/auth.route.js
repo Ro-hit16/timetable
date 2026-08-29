@@ -54,7 +54,7 @@ import {
 } from '../controllers/auth.controller.js';
 import { auth } from '../middleware/auth.middleware.js';
 import { validateRegister, validateLogin } from '../middleware/validation.middleware.js';
-
+import { googleLogin } from '../controllers/auth.controller.js';
 const router = express.Router();
 
 router.post('/register', validateRegister, register);
@@ -62,7 +62,7 @@ router.post('/login', validateLogin, login);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.post('/refresh-token', refreshToken);
-
+router.post('/google-Login', googleLogin);
 router.use(auth);
 router.post('/logout', logout);
 router.post('/change-password', changePassword);

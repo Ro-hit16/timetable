@@ -60,7 +60,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
             {navigation.map((item) => {
               const isActive = location.pathname === item.href;
               return (
-                <li key={item.name}>
+                <li key={item.name} >
                   <NavLink
                     to={item.href}
                     onClick={closeSidebar}

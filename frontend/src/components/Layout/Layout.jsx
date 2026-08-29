@@ -11,7 +11,7 @@ const Layout = () => {
       <Navbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="flex">
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        <main className="flex-1 lg:ml-64">
+        <main className="flex-1 min-h-screen overflow-auto lg:ml-64">
           <div className="px-4 sm:px-6 lg:px-8 py-8">
             <Outlet />
           </div>
