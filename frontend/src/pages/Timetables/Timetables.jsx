@@ -1,42 +1,32 @@
-
-
 import React, { useState, useEffect } from 'react';
+
 import {
   Calendar,
-  Clock,
-  Users,
-  BookOpen,
   Download,
   Plus,
-  Edit,
   Trash2,
   Eye,
   CheckCircle,
-  AlertCircle,
   BarChart3,
   Copy,
   RefreshCw,
-  Filter,
-  Search
+  Filter
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+
 import { toast } from 'react-toastify';
+
 import timetableService from '../../services/timetableService';
 import institutionConfigService from '../../services/institutionConfigService';
+
 import {
   divisions,
-  days,
-  timeSlots,
   fetchDepartments,
   fetchSubjects,
   fetchTeachers,
+  fetchClasses,
   renderTimetableGrid,
-  formatTimetableData,
-  processScheduleData
+  formatTimetableData
 } from '../../utils/timetableUtils';
-import { fetchClasses } from '../../utils/timetableUtils';
-
 const Timetables = () => {
   const [timetables, setTimetables] = useState([]);
   const [selectedTimetable, setSelectedTimetable] = useState(null);
