@@ -77,6 +77,34 @@ export const buildGAConstructorConfig = (
     config.labBlockSize = resolvedRules.lab.consecutiveBlockSize;
   }
 
+  // Timetable display timings: timetableGenerator.js's GeneticAlgorithm
+  // constructor doesn't currently read these (it only schedules by
+  // period index, not clock time), but they were previously being
+  // silently dropped here instead of passed through like every other
+  // resolvedRules field above. Carrying them onto the config object
+  // keeps this adapter's output a complete, lossless mirror of the
+  // resolved InstitutionConfig timings, so any caller/consumer of this
+  // config (now or in the future) sees the same timeSlots/breaks/etc.
+  // the UI does, rather than a subset.
+  if (Array.isArray(resolvedRules.timeSlots) && resolvedRules.timeSlots.length) {
+    config.timeSlots = resolvedRules.timeSlots;
+  }
+  if (Array.isArray(resolvedRules.breaks) && resolvedRules.breaks.length) {
+    config.breaks = resolvedRules.breaks;
+  }
+  if (resolvedRules.periodStartTime != null) {
+    config.periodStartTime = resolvedRules.periodStartTime;
+  }
+  if (resolvedRules.periodDurationMinutes != null) {
+    config.periodDurationMinutes = resolvedRules.periodDurationMinutes;
+  }
+  if (resolvedRules.lunchBreakStart != null) {
+    config.lunchBreakStart = resolvedRules.lunchBreakStart;
+  }
+  if (resolvedRules.lunchBreakEnd != null) {
+    config.lunchBreakEnd = resolvedRules.lunchBreakEnd;
+  }
+
   return config;
 };
 
