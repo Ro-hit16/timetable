@@ -173,7 +173,7 @@
 
 
 import axios from "axios";
-
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000/api';
 const timetableService = {
   // ✅ FIXED: Simplified - backend handles all data fetching
   generateTimetable: async (inputData) => {
@@ -232,7 +232,7 @@ const timetableService = {
   getTimetables: async (departmentId, filters = {}) => {
     try {
       const params = new URLSearchParams(filters);
-      const response = await fetch(`/api/timetables/department/${departmentId}?${params}`);
+      const response = await fetch(`${API_BASE_URL}/timetables/department/${departmentId}?${params}`);
       return await response.json();
     } catch (error) {
       console.error("❌ Fetch error:", error);
@@ -243,7 +243,7 @@ const timetableService = {
   // ✅ Get Single Timetable
   getTimetable: async (id, includeStats = false) => {
     try {
-      const response = await fetch(`/api/timetables/${id}?stats=${includeStats}`);
+      const response = await fetch(`${API_BASE_URL}/timetables/${id}?stats=${includeStats}`);
       return await response.json();
     } catch (error) {
       console.error("❌ Fetch error:", error);
@@ -254,7 +254,7 @@ const timetableService = {
   // ✅ Get Statistics
   getStatistics: async (id) => {
     try {
-      const response = await fetch(`/api/timetables/${id}/statistics`);
+      const response = await fetch(`${API_BASE_URL}/timetables/${id}/statistics`);
       return await response.json();
     } catch (error) {
       console.error("❌ Fetch error:", error);
@@ -265,7 +265,7 @@ const timetableService = {
   // ✅ Update Status
   updateStatus: async (id, status) => {
     try {
-      const response = await fetch(`/api/timetables/${id}/status`, {
+      const response = await fetch(`${API_BASE_URL}/timetables/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -280,7 +280,7 @@ const timetableService = {
   // ✅ Delete Timetable
   deleteTimetable: async (id) => {
     try {
-      const response = await fetch(`/api/timetables/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/timetables/${id}`, {
         method: "DELETE",
       });
       return await response.json();
@@ -293,7 +293,7 @@ const timetableService = {
   // ✅ Export Timetable
   exportTimetable: async (id, format) => {
     try {
-      return await fetch(`/api/timetables/${id}/export?format=${format}`);
+      return await fetch(`${API_BASE_URL}/timetables/${id}/export?format=${format}`);
     } catch (error) {
       console.error("❌ Export error:", error);
       throw error;
@@ -303,7 +303,7 @@ const timetableService = {
   // ✅ Clone Timetable
   cloneTimetable: async (id, { newAcademicYear, newSemester }) => {
     try {
-      const response = await fetch(`/api/timetables/${id}/clone`, {
+      const response = await fetch(`${API_BASE_URL}/timetables/${id}/clone`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ newAcademicYear, newSemester }),
