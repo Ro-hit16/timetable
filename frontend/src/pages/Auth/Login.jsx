@@ -7,7 +7,7 @@ import axios from 'axios';
 import { GoogleLogin } from '@react-oauth/google';
 import { Navigate } from 'react-router-dom';
 
-
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000/api';
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -63,7 +63,7 @@ const AuthPage = () => {
           user_name: formData.user_name.trim(),
           password: formData.password
         };
-        const res = await fetch('/api/auth/register', {
+        const res = await fetch(`${API_BASE_URL}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -86,7 +86,7 @@ const AuthPage = () => {
   // === GOOGLE HANDLER ===
  const handleGoogleLogin = async (credentialResponse) => {
   try {
-    const res = await fetch('/api/auth/google-login', {
+        const res = await fetch(`${API_BASE_URL}/auth/google-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
