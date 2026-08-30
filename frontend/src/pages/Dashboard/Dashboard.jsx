@@ -28,6 +28,7 @@ import timetableService from '../../services/timetableService';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
 import subjectService from '../../services/subjectService';
 import activityService from '../../services/activityService';
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000/api';
 const Dashboard = () => {
   const navigate = useNavigate();
 
@@ -83,7 +84,7 @@ const Dashboard = () => {
       // 3️⃣ Fetch Teachers
       try {
         console.log("Fetching teachers...");
-        const teachersRes = await fetch('/api/teachers');
+        const teachersRes = await fetch(`${API_BASE_URL}/teachers`);
         const teachersData = await teachersRes.json();
         teachersArray = teachersData.success
           ? (Array.isArray(teachersData.data) ? teachersData.data : teachersData.data.teachers || [])

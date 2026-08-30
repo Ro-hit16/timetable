@@ -1,6 +1,6 @@
 import departmentService from '../services/departmentService.js';
 import { toast } from 'react-toastify';
-
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000/api';
 export const divisions = ['SYA', 'SYB', 'TYA', 'TYB', 'BTechA', 'BTechB'];
 export const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 export const timeSlots = [
@@ -45,7 +45,7 @@ export const fetchSubjects = async (setSubjects, setLoading) => {
   try {
     setLoading && setLoading(true);
     
-    const response = await fetch('/api/subjects');
+    const response = await fetch(`${API_BASE_URL}/subjects`);
     const data = await response.json();
     //console.log('📚 Raw subjects data:', data.data); // Debug logging
 
@@ -77,7 +77,7 @@ export const fetchSubjects = async (setSubjects, setLoading) => {
 // Fetch teachers
 export const fetchTeachers = async (setTeachers) => {
   try {
-    const response = await fetch('/api/teachers');
+    const response = await fetch(`${API_BASE_URL}/teachers`);
     const data = await response.json();
     if (data.success) {
       setTeachers(Array.isArray(data.data) ? data.data : data.data.teachers || []);
@@ -92,7 +92,7 @@ export const fetchTeachers = async (setTeachers) => {
 // Fetch classes
 export const fetchClasses = async (setClasses) => {
   try {
-    const response = await fetch('/api/classes');
+    const response = await fetch(`${API_BASE_URL}/classes`);
     const data = await response.json();
     if (data.success) {
       const classArray = Array.isArray(data.data) ? data.data : data.data.classes || [];

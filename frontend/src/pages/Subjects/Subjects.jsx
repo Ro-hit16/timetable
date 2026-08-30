@@ -14,7 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import subjectService from '../../services/subjectService';
 import departmentService from '../../services/departmentService.js';
-
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000/api';
 const Subjects = () => {
   const [subjects, setSubjects] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -94,7 +94,7 @@ const Subjects = () => {
 
   const fetchTeachers = async () => {
     try {
-      const response = await fetch('/api/teachers');
+      const response = await fetch(`${API_BASE_URL}/teachers`);
       const data = await response.json();
       if (data.success) {
         setTeachers(Array.isArray(data.data) ? data.data : data.data.teachers || []);

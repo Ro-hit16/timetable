@@ -27,6 +27,7 @@ import {
   renderTimetableGrid,
   formatTimetableData
 } from '../../utils/timetableUtils';
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000/api';
 const Timetables = () => {
   const [timetables, setTimetables] = useState([]);
   const [selectedTimetable, setSelectedTimetable] = useState(null);
@@ -88,7 +89,7 @@ const Timetables = () => {
 
   useEffect(() => {
     const loadInitialData = async () => {
-      const res = await fetch('/api/classes');
+      const res = await fetch(`${API_BASE_URL}/classes`);
       const data = await res.json();
       setClasses(data); // directly set
       console.log("✅ SETTING CLASSES TO:", data);
@@ -101,8 +102,8 @@ const Timetables = () => {
     const loadInitialData = async () => {
       try {
         const [classesRes, subjectsRes, classroomsRes] = await Promise.all([
-          fetch('/api/classes'),
-          fetch('/api/subjects'),
+          fetch(`${API_BASE_URL}/classes`),
+          fetch(`${API_BASE_URL}/subjects`),
 
         ]);
 
