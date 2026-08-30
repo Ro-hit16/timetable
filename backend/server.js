@@ -29,6 +29,7 @@ import globalErrorHandler from './middleware/error.middleware.js';
 import { createError } from './utils/error.js';
 
 dotenv.config();
+console.log('DEBUG FRONTEND_URL:', process.env.FRONTEND_URL);
 const app = express();
 
 // ------------------------ MIDDLEWARES ------------------------
